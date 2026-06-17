@@ -4,7 +4,9 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { site } from "@/content/site";
 
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
+// ID público del container. Fallback hardcodeado para que producción nunca
+// quede sin GTM por una env var mal seteada (ver incidente del placeholder).
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || "GTM-TJM26DFH";
 
 const poppins = Poppins({
   subsets: ["latin"],
