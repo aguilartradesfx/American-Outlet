@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ============================================================
+   American Outlet — Design tokens
+   Base clara y limpia. Rojo/azul de marca SOLO como acento.
+   Brand book: rojo #df0e0b / #831419 · azul #004a70 / #101d27
+   Tipografía: Poppins
+   ============================================================ */
+@theme {
+  /* Marca */
+  --color-rojo: #df0e0b;
+  --color-rojo-700: #831419;
+  --color-azul: #004a70;
+  --color-azul-900: #101d27;
+
+  /* Neutros claros (base del sitio) */
+  --color-tinta: #101d27; /* texto principal (azul casi negro de marca) */
+  --color-tinta-suave: #41505c;
+  --color-tinta-tenue: #6b7884;
+  --color-niebla: #f6f8fb; /* fondo base */
+  --color-niebla-2: #eef2f7;
+  --color-borde: #e4eaf1;
+
+  /* Tipografía */
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  /* Radios */
+  --radius-glass: 1.5rem;
+
+  /* Sombras suaves para profundidad sobre fondo claro */
+  --shadow-suave: 0 1px 2px rgba(16, 29, 39, 0.04), 0 8px 24px -12px rgba(16, 29, 39, 0.12);
+  --shadow-elevada: 0 2px 4px rgba(16, 29, 39, 0.05), 0 24px 48px -20px rgba(16, 29, 39, 0.22);
+
+  /* Animaciones */
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ----------------- Base ----------------- */
+* {
+  border-color: var(--color-borde);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-niebla);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Fondo ambiental: malla de luz clara con tenues acentos de marca */
+.bg-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, rgba(0, 74, 112, 0.10), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, rgba(223, 14, 11, 0.08), transparent 55%),
+    radial-gradient(70rem 70rem at 50% 120%, rgba(0, 74, 112, 0.06), transparent 60%),
+    var(--color-niebla);
+}
+
+/* ----------------- Glassmorphism ----------------- */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-suave);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--shadow-elevada);
+}
+
+.glass-tinted {
+  background: linear-gradient(135deg, rgba(0, 74, 112, 0.10), rgba(223, 14, 11, 0.06));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Brillo de borde superior tipo "highlight" del cristal */
+.glass-hairline {
+  position: relative;
+}
+.glass-hairline::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ----------------- Panel: superficies de cristal con profundidad 3D -----------------
+   Una sola familia de tarjeta para todo el panel. Cristal esmerilado + highlight
+   superior interno + sombra en capas que da flotación real. La marca entra solo
+   como acento mínimo, nunca como relleno. */
+.card-3d {
+  background: linear-gradient(177deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-glass);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(16, 29, 39, 0.04),
+    0 14px 30px -18px rgba(16, 29, 39, 0.20),
+    0 36px 64px -44px rgba(16, 29, 39, 0.22);
+}
+
+/* Superficie secundaria, para celdas/elementos anidados dentro de una card-3d. */
+.surface {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--color-borde);
+  border-radius: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Elevación al hover — el efecto 3D se siente al interactuar. */
+.lift-3d {
+  transition: transform 0.5s var(--ease-suave), box-shadow 0.5s var(--ease-suave);
+}
+.lift-3d:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 4px rgba(16, 29, 39, 0.05),
+    0 24px 44px -18px rgba(16, 29, 39, 0.26),
+    0 48px 80px -48px rgba(16, 29, 39, 0.30);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift-3d { transition: none; }
+  .lift-3d:hover { transform: none; }
+}
+
+/* ----------------- Acentos de marca ----------------- */
+.text-gradient-brand {
+  background: linear-gradient(100deg, var(--color-azul), var(--color-rojo));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.divider-brand {
+  height: 3px;
+  width: 3.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-rojo), var(--color-azul));
+}
+
+/* ----------------- Transiciones elegantes ----------------- */
+.lift {
+  transition: transform 0.5s var(--ease-suave), box-shadow 0.5s var(--ease-suave);
+}
+.lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-elevada);
+}
+
+/* Aparición al entrar en viewport (progressive enhancement) */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.8s var(--ease-suave), transform 0.8s var(--ease-suave);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .lift { transition: none; }
+  .lift:hover { transform: none; }
+  .shimmer { animation: none; }
+}
+
+/* Brillo lento para badges/etiquetas premium */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.floaty { animation: float 7s var(--ease-suave) infinite; }
+
+/* Scrollbar discreto */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 29, 39, 0.18);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(16, 29, 39, 0.3); background-clip: content-box; }
+
+/* Focus accesible y visible */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--color-azul);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
