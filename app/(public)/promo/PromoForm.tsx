@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
-import { CopyButton } from "@/components/panel/CopyButton";
-import { CuponTicket } from "@/components/promo/CuponTicket";
 import { trackEvent } from "@/lib/analytics/track";
 import { registrarLead } from "./actions";
 
@@ -11,9 +10,9 @@ const inputCls =
   "w-full rounded-2xl border border-[var(--color-borde)] bg-white/80 px-4 py-3 text-sm text-[var(--color-tinta)] outline-none transition focus:border-[var(--color-azul)] focus:bg-white";
 
 export function PromoForm() {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [res, setRes] = useState<{ cupon: string; nombre: string; yaRegistrado: boolean } | null>(null);
 
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
@@ -37,44 +36,14 @@ export function PromoForm() {
           customer_name: nombre,
         });
       }
-      setRes(r.data);
+      // Página de gracias con URL propia: señal de registro robusta + UX.
+      const q = new URLSearchParams({
+        code: r.data.cupon,
+        nombre: r.data.nombre,
+        nuevo: r.data.yaRegistrado ? "0" : "1",
+      });
+      router.push(`/promo/gracias?${q.toString()}`);
     });
-  }
-
-  if (res) {
-    const descargaUrl = `/cupon?code=${encodeURIComponent(res.cupon)}&nombre=${encodeURIComponent(res.nombre)}`;
-    return (
-      <div className="card-3d p-7 text-center sm:p-9">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-          <Icon name="check" className="h-6 w-6" />
-        </div>
-        <h2 className="mt-4 text-xl font-semibold tracking-[-0.02em] text-[var(--color-tinta)]">
-          {res.yaRegistrado ? `¡Ya estabas registrado, ${res.nombre}!` : `¡Listo, ${res.nombre}!`}
-        </h2>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
-          Este es tu cupón. Descargalo o tomale una captura y mostralo en cualquiera de nuestras tiendas.
-        </p>
-
-        <div className="mt-6">
-          <CuponTicket nombre={res.nombre} codigo={res.cupon} />
-        </div>
-
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          <a
-            href={descargaUrl}
-            download="cupon-american-outlet.png"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--color-azul-900)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
-          >
-            <Icon name="arrow" className="h-4 w-4 rotate-90" />
-            Descargar cupón
-          </a>
-          <CopyButton text={res.cupon} label="Copiar código" />
-        </div>
-        <p className="mt-5 text-xs leading-relaxed text-[var(--color-tinta-tenue)]">
-          En tienda verificamos tu registro por tu nombre. ¡Te esperamos!
-        </p>
-      </div>
-    );
   }
 
   return (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getPromoActiva } from "@/lib/panel/promos";
 import { RuletaLanding } from "./RuletaLanding";
+import { PromoView } from "@/components/analytics/PromoView";
 
 export const metadata: Metadata = {
   title: "Girá y ganá tu descuento · Día del Padre",
@@ -15,5 +16,10 @@ export const revalidate = 300;
 
 export default async function PapaRuletaPage() {
   const promo = await getPromoActiva();
-  return <RuletaLanding fondo={promo?.imagen_url ?? null} />;
+  return (
+    <>
+      <PromoView promoNombre="ruleta_papa" promoOrigen="ruleta-papa-ads" />
+      <RuletaLanding fondo={promo?.imagen_url ?? null} />
+    </>
+  );
 }

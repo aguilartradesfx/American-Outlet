@@ -18,9 +18,11 @@ Paso a paso para dejar el tracking funcionando en GA4 + Meta (CAPI vía Adsmurai
 2. Seleccioná `docs/gtm-container.json`.
 3. Espacio de trabajo: **Existente** (tu workspace actual).
 4. Tipo de importación: **Combinar** (Merge) → **Cambiar nombre de conflictos** (Rename conflicting).
-5. Confirmá. Te crea: 1 Google Tag base, 2 tags GA4 (`generate_lead`, `contact`), 2 triggers (`CE — …`), 1 constante con el Measurement ID y 5 variables DLV.
+5. Confirmá. Te crea: 1 Google Tag base, 3 tags GA4 (`generate_lead`, `contact`, `view_promo`), 3 triggers (`CE — …`), 1 constante con el Measurement ID y 7 variables DLV.
 
 > El Measurement ID `G-4FZQHDD51C` ya viene en la constante. No hay que tocarlo.
+
+> **Actualización v2 (sobre un container ya configurado):** si ya importaste antes y solo querés sumar lo nuevo (`view_promo`), re-importá el JSON pero elegí **Sobrescribir conflictos** (Overwrite conflicting) en vez de "Cambiar nombre". Así los tags/triggers existentes se actualizan en su lugar (mantienen sus IDs internos) y los tags de Adsmurai que creaste a mano **no se tocan** (no están en el JSON). Después solo falta duplicar `Adsmurai | ViewContent` (paso 2).
 
 ---
 
@@ -34,6 +36,7 @@ El JSON **no** trae los tags de Adsmurai (dependen del template instalado en tu 
 |---|---|---|
 | `Adsmurai \| Lead` | `Lead` | `CE — generate_lead` |
 | `Adsmurai \| Contact` | `Contact` | `CE — contact` |
+| `Adsmurai \| ViewContent` | `ViewContent` | `CE — view_promo` |
 
 ### (Opcional pero recomendado) Advanced matching → mejor EMQ
 
@@ -54,8 +57,11 @@ El código ya empuja `customer_email`, `customer_phone` y `customer_name` en el 
 | Girar y registrarte **por primera vez** en `/papa` | `generate_lead` | `GA4 — generate_lead` + `Adsmurai \| Lead` |
 | Clic en cualquier botón/Fab de WhatsApp | `contact` | `GA4 — contact` + `Adsmurai \| Contact` |
 | Enviar el form de `/contacto` | `contact` | `GA4 — contact` + `Adsmurai \| Contact` |
+| Entrar a `/promo` o `/papa` | `view_promo` | `GA4 — view_promo` + `Adsmurai \| ViewContent` |
 
-3. **Verificá que NO dispare** `generate_lead` al reenviar el form con un correo **ya registrado** (debe quedar mudo — es la regla de "solo leads nuevos").
+3. **Verificá que NO dispare** `generate_lead` al reenviar el form con un correo **ya registrado** (debe quedar mudo — es la regla de "solo leads nuevos"). Tras registrarte, deberías terminar en **`/promo/gracias`** con el cupón.
+
+> **GA4 DebugView vacío pero los eventos sí salen:** DebugView depende de un "dispositivo de depuración" que se cae fácil. Si en Tag Assistant ves los hits en "Hits enviados" pero DebugView no muestra nada, verificá en **GA4 → Informes → Tiempo real** (ahí aparece todo, no depende del debug). Los datos están llegando.
 
 ### Validar GA4 (DebugView)
 - GA4 → **Administrar** → **DebugView** (se activa solo con la Vista Previa de GTM).

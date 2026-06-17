@@ -4,6 +4,7 @@ import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 import { getPromoActiva } from "@/lib/panel/promos";
 import { CuponTicket } from "@/components/promo/CuponTicket";
+import { PromoView } from "@/components/analytics/PromoView";
 import { PromoForm } from "./PromoForm";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default async function PromoPage() {
 
   return (
     <>
+      <PromoView promoNombre="promo_cupon" promoOrigen="banner-junio-2026" />
       {/* Hero con la misma imagen de la promo */}
       <section className="relative isolate flex min-h-[60vh] items-center overflow-hidden pt-28 pb-16 sm:min-h-[64vh] sm:pt-32">
         {promo?.imagen_url ? (

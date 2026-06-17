@@ -24,6 +24,7 @@ Sitio de **captación + WhatsApp** (no transaccional). El e-commerce (aostores.c
 | `generate_lead` | Registro de lead **nuevo** en la ruleta del Día del Padre. Solo si `yaRegistrado === false`. | [RuletaLanding.tsx](../app/papa/RuletaLanding.tsx) | `lead_type: "ruleta_papa"`, `lead_origen: "ruleta-papa-ads"`, `customer_email`*, `customer_phone`*, `customer_name`* | ✅ `generate_lead` | ✅ `Lead` |
 | `contact` | Clic en cualquier enlace a WhatsApp (Fab, Header, Footer, botones de página, tiendas). | Listener delegado [WhatsAppContactTracker.tsx](../components/analytics/WhatsAppContactTracker.tsx) (montado en [(public)/layout.tsx](../app/(public)/layout.tsx)) | `contact_method: "whatsapp"`, `contact_source` (pathname), `contact_label` (texto/aria del enlace) | ✅ `contact` | ✅ `Contact` |
 | `contact` | Envío del form de contacto (abre WhatsApp con mensaje armado). | [ContactForm.tsx](../components/ContactForm.tsx) | `contact_method: "whatsapp"`, `contact_source: "/contacto"`, `contact_label: "form_contacto:<interés>"` | ✅ `contact` | ✅ `Contact` |
+| `view_promo` | Al entrar a ver una promo (carga de `/promo` y `/papa`). | [PromoView.tsx](../components/analytics/PromoView.tsx) (montado en [promo/page.tsx](../app/(public)/promo/page.tsx) y [papa/page.tsx](../app/papa/page.tsx)) | `promo_nombre` (`promo_cupon` \| `ruleta_papa`), `promo_origen` | ✅ `view_promo` | ✅ `ViewContent` |
 
 \* **Campos de advanced matching** (`customer_email`, `customer_phone`, `customer_name`): solo para que Adsmurai/Meta mejoren el Event Match Quality vía hash server-side. **NO se mapean al tag de GA4** (GA4 prohíbe PII). Quedan inertes hasta que se configure el advanced matching en el dashboard de Adsmurai (ver guía).
 
@@ -31,14 +32,19 @@ Sitio de **captación + WhatsApp** (no transaccional). El e-commerce (aostores.c
 
 `generate_lead` / `Lead` dispara **solo en registros nuevos** (`yaRegistrado === false`). Quien reenvía el form ya estando registrado **no** genera conversión — evita inflar Meta con duplicados. El backend ([registrarLeadCore](../lib/leads/registrar.ts)) devuelve `yaRegistrado` para distinguirlos.
 
+### Página de gracias
+
+Tras un registro exitoso en `/promo`, el form redirige a **`/promo/gracias?code=…&nombre=…&nuevo=1|0`** ([gracias/page.tsx](../app/(public)/promo/gracias/page.tsx)), que muestra el cupón. El `page_view` de esa URL es una **señal de registro robusta** (paso de embudo en GA4), complementaria al evento `generate_lead`. `nuevo=1` lead nuevo / `nuevo=0` ya registrado. La ruleta `/papa` ya usaba este patrón con `/papa/confirmacion`.
+
 ## Mapeo a eventos estándar de Meta
 
 | dataLayer event | Evento Meta (case-sensitive) | Valor de conversión | Prioridad |
 |---|---|---|---|
 | `generate_lead` | `Lead` | Sin valor monetario (lead de cupón) | Alta — optimizar campañas |
 | `contact` | `Contact` | Sin valor monetario | Media — intención de venta vía WhatsApp |
+| `view_promo` | `ViewContent` | Sin valor monetario | Baja — mid-funnel / públicos de remarketing |
 
-Meta admite hasta 8 conversion events de prioridad. Acá usamos **2** (`Lead`, `Contact`) + el `PageView` base. Margen de sobra para sumar e-commerce en fase 2.
+Meta admite hasta 8 conversion events de prioridad. Acá usamos **3** (`Lead`, `Contact`, `ViewContent`) + el `PageView` base. Margen para sumar e-commerce en fase 2.
 
 ## Lo que NO se trackea (decidido)
 
