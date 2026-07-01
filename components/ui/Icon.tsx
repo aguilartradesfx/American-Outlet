@@ -174,6 +174,8 @@ const paths: Record<string, React.ReactNode> = {
       <path d="M8 12.3 11 15.3 16.3 9" />
     </>
   ),
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  x: <path d="M6 6l12 12M18 6 6 18" />,
 };
 
 export function Icon({ name, className }: IconProps) {
