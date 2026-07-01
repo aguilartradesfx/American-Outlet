@@ -430,7 +430,6 @@ import type {
   AccionMeta,
   CalendarioInstruccional,
   DiaInstruccional,
-  TipoAccion,
 } from "./tipos";
 
 const acciones: AccionMeta[] = [
@@ -542,10 +541,6 @@ export const plantillaInstruccional = {
     "Foto real del producto disponible ese día. Si algo se vendió, reemplazalo por otro parecido.",
   ],
 } satisfies Omit<CalendarioInstruccional, "tiendaSlug" | "tiendaNombre">;
-
-// Fuerza el chequeo de que cada acción usada tenga entrada en la leyenda.
-const _tiposConMeta: TipoAccion[] = acciones.map((a) => a.tipo);
-void _tiposConMeta;
 ```
 
 - [ ] **Step 3: Verificar typecheck y build**
@@ -846,8 +841,10 @@ Expected: sin errores.
 
 - [ ] **Step 5: Commit**
 
+El `git rm` del Step 1 ya dejó las 3 eliminaciones en el index; solo falta agregar la modificación de `tipos.ts` (usar rutas explícitas, **no** `git add -A`, para no arrastrar borrados de `.md` ajenos que puedan estar en el working tree):
+
 ```bash
-git add -A
+git add "content/calendarios-operativos/tipos.ts"
 git commit -m "chore(operativo): borrar el manual rico viejo y tipos sin uso"
 ```
 
