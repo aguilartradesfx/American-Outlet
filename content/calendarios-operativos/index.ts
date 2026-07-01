@@ -1,17 +1,15 @@
-import type { CalendarioOperativo } from "./tipos";
-import { fortuna } from "./fortuna";
-import { florencia } from "./florencia";
+import type { CalendarioInstruccional } from "./tipos";
+import { plantillaInstruccional } from "./instruccional";
 
 /**
- * Registro de calendarios operativos por slug de tienda.
+ * Tiendas operativas y su nombre. El contenido del calendario instruccional es
+ * COMPARTIDO (misma plantilla para todas); solo cambia el nombre del encabezado.
  *
- * ⚠️ Ciudad Quesada NO está aquí a propósito: su calendario es el de
- * fases/descuentos (meses/dias/piezas) y se deja intacto. Estos calendarios
- * son independientes y solo aplican a Fortuna y Florencia.
+ * ⚠️ Ciudad Quesada NO está aquí: su calendario es el de fases/descuentos.
  */
-export const calendariosOperativos: Record<string, CalendarioOperativo> = {
-  fortuna,
-  florencia,
+const nombresPorSlug: Record<string, string> = {
+  fortuna: "American Outlet La Fortuna",
+  florencia: "American Outlet Florencia",
 };
 
 /** Slugs con calendario operativo, en orden de presentación. */
@@ -19,13 +17,13 @@ export const slugsOperativos = ["fortuna", "florencia"] as const;
 
 export function getCalendarioOperativo(
   slug: string | null | undefined,
-): CalendarioOperativo | null {
-  if (!slug) return null;
-  return calendariosOperativos[slug] ?? null;
+): CalendarioInstruccional | null {
+  if (!slug || !(slug in nombresPorSlug)) return null;
+  return {
+    tiendaSlug: slug,
+    tiendaNombre: nombresPorSlug[slug],
+    ...plantillaInstruccional,
+  };
 }
 
-export function tieneCalendarioOperativo(slug: string | null | undefined): boolean {
-  return !!slug && slug in calendariosOperativos;
-}
-
-export type { CalendarioOperativo } from "./tipos";
+export type { CalendarioInstruccional } from "./tipos";
