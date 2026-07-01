@@ -4,11 +4,14 @@ import { folioDe } from "@/components/promo/CuponTicket";
 
 export const runtime = "nodejs";
 
-// Cupón descargable como PNG (1080×1080). /cupon?code=PAPA-XXXX&nombre=Juan
+// Cupón descargable como PNG (1080×1080).
+// /cupon?code=CASA-XXXX&nombre=Juan&pct=10&tag=en+muebles
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const codigo = (searchParams.get("code") || "PAPA-XXXX").toUpperCase().slice(0, 16);
+  const codigo = (searchParams.get("code") || "CASA-XXXX").toUpperCase().slice(0, 16);
   const nombre = (searchParams.get("nombre") || "Cliente").slice(0, 40);
+  const pct = (searchParams.get("pct") || "15").replace(/[^\d]/g, "").slice(0, 2) || "15";
+  const etiqueta = (searchParams.get("tag") || "para papá").slice(0, 24);
 
   const barras = Array.from({ length: 46 }, (_, i) => ((codigo.charCodeAt(i % codigo.length) + i * 7) % 3) + 2);
 
@@ -48,11 +51,11 @@ export async function GET(req: Request) {
           </div>
 
           <div style={{ display: "flex", alignItems: "flex-start", marginTop: 40 }}>
-            <span style={{ fontSize: 200, fontWeight: 700, lineHeight: 1 }}>15%</span>
+            <span style={{ fontSize: 200, fontWeight: 700, lineHeight: 1 }}>{pct}%</span>
             <span style={{ fontSize: 64, fontWeight: 700, color: "#df0e0b", marginLeft: 12, marginTop: 16 }}>OFF</span>
           </div>
           <span style={{ fontSize: 48, fontWeight: 500, color: "rgba(255,255,255,0.85)", marginTop: 8 }}>
-            para papá
+            {etiqueta}
           </span>
 
           <div style={{ display: "flex", borderTop: "3px dashed rgba(255,255,255,0.25)", marginTop: 56, marginBottom: 48 }} />

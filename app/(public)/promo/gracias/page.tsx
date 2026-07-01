@@ -16,10 +16,10 @@ export default async function GraciasPage({
   searchParams: Promise<{ code?: string; nombre?: string; nuevo?: string }>;
 }) {
   const sp = await searchParams;
-  const cupon = (sp.code || "PAPA-XXXX").toUpperCase().slice(0, 16);
+  const cupon = (sp.code || "CASA-XXXX").toUpperCase().slice(0, 16);
   const nombre = (sp.nombre || "Cliente").slice(0, 40);
   const yaRegistrado = sp.nuevo === "0";
-  const descargaUrl = `/cupon?code=${encodeURIComponent(cupon)}&nombre=${encodeURIComponent(nombre)}`;
+  const descargaUrl = `/cupon?code=${encodeURIComponent(cupon)}&nombre=${encodeURIComponent(nombre)}&pct=10&tag=${encodeURIComponent("en muebles")}`;
 
   return (
     <section className="relative flex min-h-[80vh] items-center justify-center px-5 pt-28 pb-16">
@@ -36,7 +36,7 @@ export default async function GraciasPage({
           </p>
 
           <div className="mt-6">
-            <CuponTicket nombre={nombre} codigo={cupon} />
+            <CuponTicket nombre={nombre} codigo={cupon} porcentaje={10} etiqueta="en muebles" />
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">

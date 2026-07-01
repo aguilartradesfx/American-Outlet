@@ -117,7 +117,7 @@ export function PromosClient({ promos }: { promos: PromoItem[] }) {
           </label>
           <label className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-tinta-tenue)]">
             Título (titular del banner)
-            <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`${inputCls} mt-1`} placeholder="15% OFF para papá" />
+            <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className={`${inputCls} mt-1`} placeholder="Renová tu espacio" />
           </label>
           <label className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-tinta-tenue)] sm:col-span-2">
             Subtítulo (descripción sobre el banner)

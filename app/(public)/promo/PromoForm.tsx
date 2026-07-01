@@ -28,7 +28,7 @@ export function PromoForm() {
       if (!r.data.yaRegistrado) {
         trackEvent("generate_lead", {
           lead_type: "promo_cupon",
-          lead_origen: "banner-junio-2026",
+          lead_origen: "banner-julio-2026",
           // Advanced matching de Meta — Adsmurai los hashea server-side (mejor EMQ).
           // NO mapear estos campos al tag de GA4 (PII prohibida en GA4).
           customer_email: correo,
@@ -78,7 +78,7 @@ export function PromoForm() {
         disabled={pending}
         className="group flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-rojo)] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-12px_rgba(223,14,11,0.7)] transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-60"
       >
-        {pending ? "Generando tu cupón…" : "Obtener mi 15% OFF"}
+        {pending ? "Generando tu cupón…" : "Obtener mi 10% OFF"}
         {!pending && <Icon name="arrow" className="h-[18px] w-[18px] transition-transform duration-300 group-hover:translate-x-0.5" />}
       </button>
       <p className="text-center text-[11px] leading-relaxed text-[var(--color-tinta-tenue)]">

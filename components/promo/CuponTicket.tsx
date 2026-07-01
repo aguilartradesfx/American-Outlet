@@ -22,10 +22,16 @@ export function CuponTicket({
   nombre,
   codigo,
   ejemplo = false,
+  porcentaje = 15,
+  etiqueta = "para papá",
 }: {
   nombre: string;
   codigo: string;
   ejemplo?: boolean;
+  /** Descuento grande a mostrar (por defecto 15 — campaña Día del Padre). */
+  porcentaje?: number;
+  /** Bajada bajo el %: "para papá", "en muebles", etc. */
+  etiqueta?: string;
 }) {
   return (
     <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-[var(--color-azul-900)] to-[#1b2c39] text-white shadow-[0_30px_60px_-24px_rgba(16,29,39,0.55)]">
@@ -48,10 +54,10 @@ export function CuponTicket({
 
       <div className="px-7 pt-4">
         <p className="flex items-start text-[64px] font-bold leading-none tracking-tight">
-          15%
+          {porcentaje}%
           <span className="ml-1.5 mt-1 text-2xl font-semibold text-[var(--color-rojo)]">OFF</span>
         </p>
-        <p className="mt-1 text-lg font-medium text-white/85">para papá</p>
+        <p className="mt-1 text-lg font-medium text-white/85">{etiqueta}</p>
       </div>
 
       {/* Perforación tipo ticket */}

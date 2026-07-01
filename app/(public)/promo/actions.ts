@@ -10,7 +10,8 @@ export async function registrarLead(input: {
 }): Promise<ActionResult<LeadRegistrado>> {
   return registrarLeadCore({
     ...input,
-    origen: "banner-junio-2026",
+    origen: "banner-julio-2026",
     ghlSource: "Banner Web — Promo del mes",
+    cuponPrefijo: "CASA",
   });
 }

@@ -10,13 +10,13 @@ function fail(error: string): { ok: false; error: string } {
   return { ok: false, error };
 }
 
-/** Cupón legible: PAPA-XXXX (base32 sin caracteres ambiguos). */
-function generarCupon(): string {
+/** Cupón legible: PREFIJO-XXXX (base32 sin caracteres ambiguos). */
+function generarCupon(prefijo = "PAPA"): string {
   const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.randomBytes(5);
   let code = "";
   for (let i = 0; i < 5; i++) code += abc[bytes[i] % abc.length];
-  return `PAPA-${code}`;
+  return `${prefijo}-${code}`;
 }
 
 /** Normaliza el WhatsApp a E.164 de Costa Rica para GHL. */
@@ -82,6 +82,8 @@ export async function registrarLeadCore(input: {
   whatsapp: string;
   origen: string;
   ghlSource: string;
+  /** Prefijo del código de cupón (por defecto "PAPA"). Ej: "CASA" para muebles. */
+  cuponPrefijo?: string;
 }): Promise<ActionResult<LeadRegistrado>> {
   try {
     const nombre = input.nombre.trim();
@@ -111,7 +113,7 @@ export async function registrarLeadCore(input: {
     const ghlId = await sincronizarGHL({ nombre, correo, telefono, source: input.ghlSource });
 
     // Insertar con reintento ante colisión de cupón (muy improbable).
-    let cupon = generarCupon();
+    let cupon = generarCupon(input.cuponPrefijo);
     for (let intento = 0; intento < 3; intento++) {
       const { error } = await admin.from("leads").insert({
         nombre,

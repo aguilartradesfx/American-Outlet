@@ -8,29 +8,29 @@ import { PromoView } from "@/components/analytics/PromoView";
 import { PromoForm } from "./PromoForm";
 
 export const metadata: Metadata = {
-  title: "15% OFF para papá",
+  title: "Cupón 10% OFF en muebles",
   description:
-    "Registrate y llevate tu cupón de 15% OFF para el Día del Padre. Mostralo en cualquiera de nuestras tiendas de American Outlet.",
+    "Renová tu espacio: registrate gratis y llevate tu cupón de 10% OFF en muebles. Mostralo en cualquiera de nuestras tiendas de American Outlet.",
 };
 
 export const revalidate = 300;
 
 const pasos = [
   { icon: "chat", t: "Dejá tus datos", d: "Nombre, correo y WhatsApp. Toma 10 segundos." },
-  { icon: "tag", t: "Recibí tu cupón", d: "Al instante, con tu código único de 15% OFF." },
+  { icon: "tag", t: "Recibí tu cupón", d: "Al instante, con tu código único de 10% OFF en muebles." },
   { icon: "store", t: "Usalo en tienda", d: "Descargalo o tomale captura y mostralo en tu compra." },
 ];
 
 export default async function PromoPage() {
   const promo = await getPromoActiva();
-  const titulo = promo?.titulo || "15% OFF para papá";
+  const titulo = promo?.titulo || "Renová tu espacio";
   const subtitulo =
     promo?.subtitulo ||
-    "Registrate gratis y llevate tu cupón para usar en cualquiera de nuestras tiendas.";
+    "Liquidación de muebles para tu casa o tu Airbnb. Registrate gratis y llevate tu cupón de 10% para usar en cualquiera de nuestras tiendas.";
 
   return (
     <>
-      <PromoView promoNombre="promo_cupon" promoOrigen="banner-junio-2026" />
+      <PromoView promoNombre="promo_cupon" promoOrigen="banner-julio-2026" />
       {/* Hero con la misma imagen de la promo */}
       <section className="relative isolate flex min-h-[60vh] items-center overflow-hidden pt-28 pb-16 sm:min-h-[64vh] sm:pt-32">
         {promo?.imagen_url ? (
@@ -45,7 +45,7 @@ export default async function PromoPage() {
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-rojo)]" />
-              Promo del mes · Día del Padre
+              Promo del mes · Muebles y hogar
             </span>
             <h1 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-0.03em] text-white sm:text-6xl">
               {titulo}
@@ -87,7 +87,7 @@ export default async function PromoPage() {
               <p className="mb-3 mt-10 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-tinta-tenue)]">
                 Así se ve tu cupón
               </p>
-              <CuponTicket nombre="Tu Nombre" codigo="PAPA-XXXX" ejemplo />
+              <CuponTicket nombre="Tu Nombre" codigo="CASA-XXXX" ejemplo porcentaje={10} etiqueta="en muebles" />
             </div>
 
             {/* Derecha: formulario */}

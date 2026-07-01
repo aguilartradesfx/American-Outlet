@@ -205,7 +205,7 @@ function PromoSlide({ promo }: { promo: Promo }) {
         <div className="max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-rojo)]" />
-            Promo del mes · Día del Padre
+            Promo del mes · Muebles y hogar
           </span>
 
           <h2 className="mt-5 text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-white sm:text-6xl sm:leading-[1.02]">
