@@ -1,10 +1,10 @@
 /**
- * Calendario operativo de contenido por tienda (manual del administrador).
- * Contenido de solo lectura, transcrito de los manuales operativos de cada tienda.
- * Patrón "contenido en código" (igual que content/plan-junio-2026.ts).
+ * Tipos del calendario instruccional por tienda (contenido en código, solo
+ * lectura). Define el "mes tipo" de acciones que ejecutan las tiendas
+ * operativas (Fortuna y Florencia).
  *
- * ⚠️ Estos calendarios son INDEPENDIENTES por tienda. No se relacionan con el
- * calendario de fases/descuentos (meses/dias/piezas), que es el de Ciudad Quesada.
+ * ⚠️ Es INDEPENDIENTE del calendario de fases/descuentos (meses/dias/piezas),
+ * que es el de Ciudad Quesada.
  */
 
 // ---------------------------------------------------------------------------
