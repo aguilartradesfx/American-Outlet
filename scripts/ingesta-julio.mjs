@@ -238,71 +238,17 @@ if (DRY) {
 // --- identidad del mes y fases (desde el MD) --------------------------------
 const MES_META = {
   titulo: "Julio 2026",
-  bajada: "Plan de contenido · Renová tu Espacio · Liquidación de Muebles · 4 fases (escalado interno)",
-  regla_oro_frase: "Lo que está hoy, no está mañana — y hoy podés amueblar todo de una.",
+  bajada: "Somos Liquidadores · Las marcas más grandes de USA a precio de outlet",
+  regla_oro_frase:
+    "Somos liquidadores: traemos las marcas más grandes de USA a precio de outlet — y lo que está hoy, no está mañana.",
   regla_oro_contexto:
-    "El escalado de descuentos (10 → 15 → 20 → 25%) es INTERNO: el cliente nunca lo ve. La urgencia viene de la escasez visible (\"lo que se va, no vuelve\"), del volumen (\"amueblás completo en una vuelta\") y del reloj de la temporada alta para anfitriones. Producto y espacio al frente; el descuento es el cierre, no el titular. El único día que se nombra el % más alto es el Gran Cierre.",
-  voz: "Español de Costa Rica, voseo, directo y seco. El espacio y el mueble son el protagonista narrativo; el descuento es el cierre, no el titular.",
+    "La identidad manda: somos liquidadores de mercancía de marcas como Amazon, Target, Costco, Walmart y Home Depot, a precio de outlet. Se repite todo el mes hasta grabarse. La urgencia tiene tres motores siempre encendidos: carga nueva (llega mercancía fresca de USA), escasez (lo que se vende no vuelve) y exclusividad (cada cargamento es único). Precio de outlet constante, SIN cantar porcentajes de descuento: el precio real de un producto SÍ se puede mostrar, el % nunca. Las marcas se nombran como procedencia, no como sociedad. Producto y marca al frente; el precio cierra, no titula, salvo un hallazgo brutal.",
+  voz: "Español de Costa Rica, voseo, directo y seco. Identidad de liquidador al frente. El producto y la marca son protagonistas; el precio cierra, no titula.",
 };
 
-const FASES_META = [
-  {
-    numero: 1,
-    nombre: "Apertura",
-    descuento: 10,
-    dia_desde: 1,
-    dia_hasta: 12,
-    objetivo:
-      "Apertura. La semana con más muebles del mes — el momento de amueblar completo. Establece ambos tracks (Hogar + Airbnb).",
-    cita: "Hoy hay tanto que amueblás todo de una.",
-    logica: "Más stock = más variedad y amueblar completo en una vuelta.",
-    color_acento: "#004a70",
-    color_suave: "rgba(0,74,112,0.10)",
-    color_texto: "#004a70",
-  },
-  {
-    numero: 2,
-    nombre: "Escasez sube",
-    descuento: 15,
-    dia_desde: 13,
-    dia_hasta: 19,
-    objetivo:
-      "La escasez sube. Reforzamos el héroe (amueblá completo) y el ROI del anfitrión. La variedad ya empezó a bajar.",
-    cita: "Lo que ves hoy es lo que queda.",
-    logica: "El descuento sube y la evidencia visual del movimiento hace el trabajo.",
-    color_acento: "#9a3324",
-    color_suave: "rgba(154,51,36,0.10)",
-    color_texto: "#9a3324",
-  },
-  {
-    numero: 3,
-    nombre: "Semana de Guanacaste",
-    descuento: 20,
-    dia_desde: 20,
-    dia_hasta: 26,
-    objetivo:
-      "Fin de semana de Guanacaste (sáb 25). Momento puntual de feriado: jueves 23 live pre-feriado + activación el sábado.",
-    cita: "Aprovechá el feriado para renovar sin apuro.",
-    logica: "Empujón de feriado largo + escasez creciente.",
-    color_acento: "#c0341d",
-    color_suave: "rgba(192,52,29,0.10)",
-    color_texto: "#c0341d",
-  },
-  {
-    numero: 4,
-    nombre: "Gran Cierre",
-    descuento: 25,
-    dia_desde: 27,
-    dia_hasta: 31,
-    objetivo:
-      "El final. Acá SÍ se dice 'el descuento más alto del mes' — no hay nada después y el inventario es el más bajo.",
-    cita: "Lo que ves hoy es lo último.",
-    logica: "Liquidación final de lo que queda. FOMO máximo.",
-    color_acento: "#df0e0b",
-    color_suave: "rgba(223,14,11,0.10)",
-    color_texto: "#df0e0b",
-  },
-];
+// El modelo liquidador de julio NO usa fases de descuento (ver "Modelo de oferta
+// (reemplaza las fases)" en el MD): sin escalado, días sin fase.
+const FASES_META = [];
 
 // --- inserción -------------------------------------------------------------
 const db = createClient(url, serviceKey, {
@@ -344,9 +290,9 @@ await db
   })
   .eq("id", mes.id);
 
-// 2) Fases (reemplazo total).
+// 2) Fases (reemplazo total). El modelo liquidador no usa fases → se borran.
 await db.from("fases").delete().eq("mes_id", mes.id);
-{
+if (FASES_META.length > 0) {
   const { error } = await db.from("fases").insert(
     FASES_META.map((f) => ({ ...f, mes_id: mes.id })),
   );
@@ -354,7 +300,9 @@ await db.from("fases").delete().eq("mes_id", mes.id);
     console.error("✗ Error insertando fases:", error.message);
     process.exit(1);
   }
-  console.log("✓ 4 fases insertadas.");
+  console.log(`✓ ${FASES_META.length} fases insertadas.`);
+} else {
+  console.log("• Sin fases (modelo liquidador, sin escalado de descuentos).");
 }
 
 // 3) Días 1..31 (upsert) + relink a fases por rango.
