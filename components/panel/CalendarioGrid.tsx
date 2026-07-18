@@ -11,18 +11,20 @@ const diasSemana = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"] as const;
 // Etiqueta corta indexada por dia_semana (0=DOM..6=SÁB) para la vista móvil.
 const diaSemanaCorto = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
 
-// Cada tipo de pieza se pinta con un tag pastel (fondo claro + texto del tono).
-const tipoTag: Record<TipoPieza, string> = {
-  post: "tag-pastel--azul",
-  flyer: "tag-pastel--violeta",
-  historia: "tag-pastel--rosa",
-  reel: "tag-pastel--ambar",
-  live: "tag-pastel--verde",
-  carrusel: "tag-pastel--azul",
-  cinema: "tag-pastel--violeta",
-  activacion: "tag-pastel--rosa",
-  mantenimiento: "tag-pastel--gris",
+// Color base por tipo de pieza → del que se derivan los pasteles del día.
+const tipoColor: Record<TipoPieza, string> = {
+  post: "#1a73a8",
+  carrusel: "#1a73a8",
+  flyer: "#6d5bd0",
+  cinema: "#6d5bd0",
+  historia: "#c0392b",
+  activacion: "#c0392b",
+  reel: "#b26a12",
+  live: "#1f8a54",
+  mantenimiento: "#5b6472",
 };
+
+const pastelBg = (color: string) => `color-mix(in srgb, ${color} 12%, #fff)`;
 
 // dia_semana 0=DOM..6=SÁB → columna en grilla LUN-primero (0..6).
 function colDeDiaSemana(ds: number | null): number {
@@ -57,6 +59,7 @@ export function CalendarioGrid({
           const fase = dia.fase;
           const principal = dia.piezas[0];
           const meta = principal ? tipoPiezaMeta[principal.tipo] : null;
+          const color = principal ? tipoColor[principal.tipo] : null;
           const extra = dia.piezas.length - 1;
           return (
             <button
@@ -74,9 +77,12 @@ export function CalendarioGrid({
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                {meta && principal ? (
+                {meta && principal && color ? (
                   <>
-                    <span className={`tag-pastel ${tipoTag[principal.tipo]}`}>
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                      style={{ backgroundColor: pastelBg(color), color }}
+                    >
                       <Icon name={meta.icon} className="h-3 w-3" />
                       {meta.abrev}
                     </span>
@@ -110,76 +116,89 @@ export function CalendarioGrid({
         })}
       </div>
 
-      {/* Desktop: grilla mensual de 7 columnas. */}
-      <div className="card-3d hidden overflow-hidden p-3 sm:block">
-        <div className="grid grid-cols-7 gap-2">
+      {/* Desktop: grilla mensual contigua de 7 columnas, celdas grandes. */}
+      <div className="hidden overflow-hidden rounded-2xl border border-[var(--p-line)] bg-white sm:block">
+        {/* Cabecera de días */}
+        <div className="grid grid-cols-7 bg-[var(--p-bg)]">
           {diasSemana.map((d) => (
             <div
               key={d}
-              className="px-2 pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-tinta-tenue)]"
+              className="border-b border-[var(--p-line)] py-3 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-tinta-tenue)]"
             >
               {d}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        {/* Celdas */}
+        <div className="grid grid-cols-7">
           {Array.from({ length: offset }).map((_, i) => (
-            <div key={`pad-${i}`} aria-hidden="true" />
+            <div
+              key={`pad-${i}`}
+              aria-hidden="true"
+              className="min-h-[7rem] border-b border-r border-[var(--p-line)] bg-[var(--p-bg)]/50 lg:min-h-[8.5rem]"
+            />
           ))}
           {dias.map((dia) => {
             const fase = dia.fase;
             const principal = dia.piezas[0];
             const meta = principal ? tipoPiezaMeta[principal.tipo] : null;
+            const color = principal ? tipoColor[principal.tipo] : null;
             const extra = dia.piezas.length - 1;
             return (
               <button
                 key={dia.id}
                 type="button"
                 onClick={() => setSelId(dia.id)}
-                className="surface group flex min-h-[6rem] flex-col gap-2 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--p-line-2)] sm:min-h-[7.5rem]"
+                style={color ? { backgroundColor: pastelBg(color) } : undefined}
+                className="group flex min-h-[7rem] flex-col gap-1.5 border-b border-r border-[var(--p-line)] p-3 text-left transition-colors hover:brightness-[0.98] lg:min-h-[8.5rem]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[var(--color-tinta)]">
+                <div className="flex items-start justify-between gap-2">
+                  {meta && color ? (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em]"
+                      style={{ color }}
+                    >
+                      <Icon name={meta.icon} className="h-3 w-3 shrink-0" />
+                      {meta.abrev}
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                  <span
+                    className="text-sm font-semibold text-[var(--color-tinta)]"
+                    style={color ? { color } : undefined}
+                  >
                     {dia.fecha}
                   </span>
-                  {fase && (
-                    <span
-                      className="flex items-center gap-1 text-[10px] font-semibold text-[var(--color-tinta-tenue)]"
-                      title={`Fase ${fase.numero} · ${fase.descuento}%`}
-                    >
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: fase.color_acento ?? "#004a70" }}
-                        aria-hidden="true"
-                      />
-                      {fase.descuento}%
-                    </span>
-                  )}
                 </div>
 
-                <div className="mt-auto">
-                  {meta && principal ? (
-                    <div className={`rounded-xl border px-2 py-1.5 ${tipoTag[principal.tipo]}`}>
-                      <span className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em]">
-                        <Icon name={meta.icon} className="h-3 w-3 shrink-0" />
-                        {meta.abrev}
-                      </span>
-                      <p className="mt-0.5 truncate text-[11px] font-medium leading-tight">
-                        {principal.titulo || meta.label}
-                      </p>
-                      {extra > 0 && (
-                        <p className="mt-0.5 text-[10px] leading-tight opacity-80">
-                          +{extra} más
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="px-1 text-[10px] font-medium uppercase tracking-wide text-[var(--color-tinta-tenue)]/60">
-                      sin contenido
+                {meta && principal ? (
+                  <div className="min-w-0">
+                    <p className="truncate text-[12px] font-semibold leading-tight text-[var(--color-tinta)]">
+                      {principal.titulo || meta.label}
                     </p>
-                  )}
-                </div>
+                    {extra > 0 && (
+                      <p className="mt-0.5 text-[11px] leading-tight text-[var(--color-tinta-suave)]">
+                        +{extra} más
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                {fase && (
+                  <span
+                    className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-[var(--color-tinta-tenue)]"
+                    title={`Fase ${fase.numero} · ${fase.descuento}%`}
+                  >
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: fase.color_acento ?? "#004a70" }}
+                      aria-hidden="true"
+                    />
+                    {fase.descuento}%
+                  </span>
+                )}
               </button>
             );
           })}
