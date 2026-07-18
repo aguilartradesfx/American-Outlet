@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
     // holgura. Si esto se queda corto, el action se rechaza y la UI lo muestra.
     serverActions: { bodySizeLimit: "16mb" },
   },
+  async rewrites() {
+    return [
+      // Brand book de Bralto: HTML autocontenido servido desde public/.
+      // Ruta limpia /brand-book -> el archivo estático, sin exponer el .html.
+      { source: "/brand-book", destination: "/brand-book.html" },
+    ];
+  },
 };
 
 export default nextConfig;
