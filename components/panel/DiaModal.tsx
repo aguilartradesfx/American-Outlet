@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { PiezaCard } from "@/components/panel/PiezaCard";
 import { PiezasEditor } from "@/components/panel/PiezasEditor";
+import { EntregaDiaUploader } from "@/components/panel/EntregaDiaUploader";
 import type { DiaVista } from "@/lib/panel/vista";
 
 const diaSemanaLabel = [
@@ -118,6 +119,14 @@ export function DiaModal({
               />
             ))
           )}
+
+          {/* Entregar contenido — registro de lo que se publicó ese día. */}
+          <EntregaDiaUploader
+            diaId={dia.id}
+            entregas={dia.entregas}
+            currentUserId={currentUserId}
+            esSuperadmin={esSuperadmin}
+          />
 
           {esSuperadmin && (
             <PiezasEditor

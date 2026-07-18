@@ -12,6 +12,7 @@ export type Fase = Tables<"fases">;
 export type Dia = Tables<"dias">;
 export type Pieza = Tables<"piezas">;
 export type Tienda = Tables<"tiendas">;
+export type EntregaDia = Tables<"entregas_dia">;
 
 export async function getTiendas(): Promise<Tienda[]> {
   const supabase = await createClient();
@@ -96,6 +97,22 @@ export async function getDiasDeMes(mesId: string): Promise<DiaConPiezas[]> {
     ...d,
     piezas: [...(d.piezas ?? [])].sort((a, b) => a.orden - b.orden),
   }));
+}
+
+/**
+ * Entregas de contenido de un conjunto de días. Se lee con service-role porque
+ * `entregas_dia` tiene RLS deny-all (el aislamiento por tienda ya viene dado por
+ * los días, que el llamador resuelve para la tienda correcta).
+ */
+export async function getEntregasDeDias(diaIds: string[]): Promise<EntregaDia[]> {
+  if (diaIds.length === 0) return [];
+  const admin = createServiceRoleClient();
+  const { data } = await admin
+    .from("entregas_dia")
+    .select("*")
+    .in("dia_id", diaIds)
+    .order("creado_en", { ascending: true });
+  return data ?? [];
 }
 
 /** Un día concreto del mes (por número de fecha) con fase y piezas ordenadas. */

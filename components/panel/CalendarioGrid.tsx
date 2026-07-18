@@ -186,19 +186,32 @@ export function CalendarioGrid({
                   </div>
                 ) : null}
 
-                {fase && (
-                  <span
-                    className="mt-auto flex items-center gap-1.5 text-[10px] font-semibold text-[var(--color-tinta-tenue)]"
-                    title={`Fase ${fase.numero} · ${fase.descuento}%`}
-                  >
+                <div className="mt-auto flex items-center justify-between gap-1">
+                  {fase ? (
                     <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: fase.color_acento ?? "#004a70" }}
-                      aria-hidden="true"
-                    />
-                    {fase.descuento}%
-                  </span>
-                )}
+                      className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--color-tinta-tenue)]"
+                      title={`Fase ${fase.numero} · ${fase.descuento}%`}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: fase.color_acento ?? "#004a70" }}
+                        aria-hidden="true"
+                      />
+                      {fase.descuento}%
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                  {dia.entregas.length > 0 && (
+                    <span
+                      className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600"
+                      title={`${dia.entregas.length} entrega(s) subida(s)`}
+                    >
+                      <Icon name="check" className="h-3 w-3" />
+                      {dia.entregas.length}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}

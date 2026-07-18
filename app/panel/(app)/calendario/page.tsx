@@ -5,11 +5,12 @@ import {
   getFasesDeMes,
   getDiasDeMes,
   getUsuariosAsignables,
+  getEntregasDeDias,
   getTiendas,
   getTiendaActual,
 } from "@/lib/panel/datos";
 import { getUsuarioYRol } from "@/lib/auth/guards";
-import type { DiaVista } from "@/lib/panel/vista";
+import type { DiaVista, EntregaVista } from "@/lib/panel/vista";
 import { CalendarioGrid } from "@/components/panel/CalendarioGrid";
 
 export const metadata: Metadata = { title: "Calendario" };
@@ -93,7 +94,25 @@ export default async function CalendarioPage({
     getFasesDeMes(mes.id),
     getDiasDeMes(mes.id),
   ]);
-  const usuariosAsignables = esSuperadmin ? await getUsuariosAsignables() : undefined;
+  const [usuariosAsignables, entregas] = await Promise.all([
+    esSuperadmin ? getUsuariosAsignables() : Promise.resolve(undefined),
+    getEntregasDeDias(dias.map((d) => d.id)),
+  ]);
+
+  // Entregas agrupadas por día.
+  const entregasPorDia = new Map<string, EntregaVista[]>();
+  for (const e of entregas) {
+    const arr = entregasPorDia.get(e.dia_id) ?? [];
+    arr.push({
+      id: e.id,
+      url: e.url,
+      nota: e.nota,
+      subido_por_id: e.subido_por_id,
+      subido_por_nombre: e.subido_por_nombre,
+      creado_en: e.creado_en,
+    });
+    entregasPorDia.set(e.dia_id, arr);
+  }
 
   const totalPiezas = dias.reduce((n, d) => n + d.piezas.length, 0);
   const diasConContenido = dias.filter((d) => d.piezas.length > 0).length;
@@ -112,6 +131,7 @@ export default async function CalendarioPage({
         }
       : null,
     piezas: d.piezas,
+    entregas: entregasPorDia.get(d.id) ?? [],
   }));
 
   return (

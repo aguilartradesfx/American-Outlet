@@ -482,6 +482,96 @@ export type Database = {
           },
         ]
       }
+      entregas_dia: {
+        Row: {
+          actualizado_en: string
+          alto: number | null
+          ancho: number | null
+          bytes: number | null
+          cloudinary_public_id: string
+          creado_en: string
+          dia_id: string
+          formato: string | null
+          id: string
+          nota: string | null
+          subido_por_id: string | null
+          subido_por_nombre: string | null
+          url: string
+        }
+        Insert: {
+          actualizado_en?: string
+          alto?: number | null
+          ancho?: number | null
+          bytes?: number | null
+          cloudinary_public_id: string
+          creado_en?: string
+          dia_id: string
+          formato?: string | null
+          id?: string
+          nota?: string | null
+          subido_por_id?: string | null
+          subido_por_nombre?: string | null
+          url: string
+        }
+        Update: {
+          actualizado_en?: string
+          alto?: number | null
+          ancho?: number | null
+          bytes?: number | null
+          cloudinary_public_id?: string
+          creado_en?: string
+          dia_id?: string
+          formato?: string | null
+          id?: string
+          nota?: string | null
+          subido_por_id?: string | null
+          subido_por_nombre?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
+      entregas_dia_auditoria: {
+        Row: {
+          accion: string
+          actor_id: string | null
+          actor_nombre: string | null
+          actor_rol: string | null
+          cloudinary_public_id: string | null
+          creado_en: string
+          dia_id: string | null
+          entrega_dia_id: string | null
+          id: string
+          subido_por_id: string | null
+          url: string | null
+        }
+        Insert: {
+          accion: string
+          actor_id?: string | null
+          actor_nombre?: string | null
+          actor_rol?: string | null
+          cloudinary_public_id?: string | null
+          creado_en?: string
+          dia_id?: string | null
+          entrega_dia_id?: string | null
+          id?: string
+          subido_por_id?: string | null
+          url?: string | null
+        }
+        Update: {
+          accion?: string
+          actor_id?: string | null
+          actor_nombre?: string | null
+          actor_rol?: string | null
+          cloudinary_public_id?: string | null
+          creado_en?: string
+          dia_id?: string | null
+          entrega_dia_id?: string | null
+          id?: string
+          subido_por_id?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
