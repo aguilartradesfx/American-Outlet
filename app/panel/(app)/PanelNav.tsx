@@ -71,15 +71,15 @@ export function PanelNav({
             href={v.href}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-[1.05rem] px-4 py-2.5 text-sm font-medium transition-all duration-300 ${
+            className={`flex items-center gap-3 rounded-[0.9rem] px-4 py-2.5 text-sm transition-colors duration-200 ${
               active
-                ? "bg-[var(--color-azul-900)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_-10px_rgba(16,29,39,0.85)]"
-                : "text-[var(--color-tinta-suave)] hover:bg-white/70 hover:text-[var(--color-tinta)]"
+                ? "bg-[var(--p-active)] font-semibold text-[var(--color-azul)]"
+                : "font-medium text-[var(--color-tinta-suave)] hover:bg-[var(--p-active)] hover:text-[var(--color-tinta)]"
             }`}
           >
             <Icon
               name={v.icon}
-              className={`h-[18px] w-[18px] ${active ? "text-white" : "text-[var(--color-tinta-tenue)]"}`}
+              className={`h-[18px] w-[18px] ${active ? "text-[var(--color-azul)]" : "text-[var(--color-tinta-tenue)]"}`}
             />
             {v.label}
           </Link>

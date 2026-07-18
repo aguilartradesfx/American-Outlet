@@ -1,6 +1,10 @@
 import { Icon } from "@/components/ui/Icon";
 import type { CalendarioInstruccional as Data } from "@/content/calendarios-operativos/tipos";
 
+// Deriva un fondo pastel del color de la acción (sin tocar los datos).
+const pastelBg = (color: string) => `color-mix(in srgb, ${color} 14%, #fff)`;
+const pastelBorde = (color: string) => `color-mix(in srgb, ${color} 26%, #fff)`;
+
 export function CalendarioInstruccional({ data }: { data: Data }) {
   const metaPorTipo = new Map(data.acciones.map((a) => [a.tipo, a]));
 
@@ -24,8 +28,8 @@ export function CalendarioInstruccional({ data }: { data: Data }) {
         {data.acciones.map((a) => (
           <div key={a.tipo} className="surface lift-3d flex items-start gap-3 p-4">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white"
-              style={{ backgroundColor: a.color }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ backgroundColor: pastelBg(a.color), color: a.color }}
             >
               <Icon name={a.icon} className="h-5 w-5" />
             </span>
@@ -43,6 +47,7 @@ export function CalendarioInstruccional({ data }: { data: Data }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {data.dias.map((d) => {
           const a = metaPorTipo.get(d.tipo);
+          const color = a?.color ?? "#004a70";
           return (
             <div key={d.dia} className="surface lift-3d flex flex-col gap-2 p-4">
               <div className="flex items-center justify-between gap-2">
@@ -50,8 +55,12 @@ export function CalendarioInstruccional({ data }: { data: Data }) {
                   Día {d.dia}
                 </span>
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
-                  style={{ backgroundColor: a?.color ?? "#004a70" }}
+                  className="tag-pastel"
+                  style={{
+                    backgroundColor: pastelBg(color),
+                    color,
+                    borderColor: pastelBorde(color),
+                  }}
                 >
                   <Icon name={a?.icon ?? "sparkle"} className="h-3.5 w-3.5" />
                   {a?.label ?? d.tipo}
