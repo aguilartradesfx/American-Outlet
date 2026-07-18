@@ -27,6 +27,9 @@ yarn-error.log*
 # accesos / credenciales (no subir nunca)
 ACCESOS-PANEL.md
 
+# exports de leads (PII de clientes, no subir nunca)
+leads-reales-export.csv
+
 # vercel
 .vercel
 

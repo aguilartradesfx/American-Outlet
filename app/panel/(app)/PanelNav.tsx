@@ -7,7 +7,6 @@ import { Icon } from "@/components/ui/Icon";
 type Rol = "tienda" | "admin" | "superadmin";
 
 const restoBase = [
-  { href: "/panel/historias", label: "Guía Historias", icon: "tech" },
   { href: "/panel/estudio", label: "Estudio IA", icon: "image" },
   { href: "/panel/leads", label: "Leads Web", icon: "chat" },
 ];
