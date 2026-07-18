@@ -39,20 +39,12 @@ export function PanelNav({
   // con el selector dentro de la página.
   const calendarioItem = { href: "/panel/calendario", label: "Calendario", icon: "calendar" };
 
-  const entregasItem =
-    rol === "superadmin"
-      ? { href: "/panel/entregas", label: "Entregas", icon: "broadcast" }
-      : rol === "tienda"
-        ? { href: "/panel/entregas", label: "Materiales", icon: "broadcast" }
-        : null;
-
   const items = [
     calendarioItem,
     ...(esTiendaOperativa
       ? []
       : [{ href: "/panel/fases", label: "Fases", icon: "chart" }]),
     ...restoBase,
-    ...(entregasItem ? [entregasItem] : []),
     ...superadminItems.filter((i) => i.roles.includes(rol)),
     ...adminItems.filter((i) => i.roles.includes(rol)),
   ];
