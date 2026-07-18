@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // El Estudio IA compone el logo oficial (public/brand/) sobre la imagen con
+  // fs en runtime; hay que incluirlo en el bundle de la función.
+  outputFileTracingIncludes: {
+    "/panel/estudio": ["./public/brand/logo-poster.svg"],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

@@ -1,5 +1,7 @@
 "use server";
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { GoogleGenAI } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
 import sharp from "sharp";
@@ -8,8 +10,29 @@ import { cloudinary } from "@/lib/cloudinary";
 import type { ActionResult } from "@/lib/panel/resultado";
 import { construirPrompt, ASPECT_RATIO } from "./prompt";
 
-// Nano Banana = modelo de imágenes de Google.
-const MODELO = "gemini-2.5-flash-image";
+/** Compone el logo oficial (SVG) arriba-izquierda de la imagen generada. */
+async function componerLogo(base: Buffer): Promise<Buffer> {
+  try {
+    const meta = await sharp(base).metadata();
+    const W = meta.width ?? 1024;
+    const margen = Math.round(W * 0.05);
+    const logoW = Math.round(W * 0.26);
+    const svg = await readFile(join(process.cwd(), "public/brand/logo-poster.svg"));
+    const logoPng = await sharp(svg, { density: 400 })
+      .resize({ width: logoW })
+      .png()
+      .toBuffer();
+    return await sharp(base)
+      .composite([{ input: logoPng, top: margen, left: margen }])
+      .png()
+      .toBuffer();
+  } catch {
+    return base; // si el overlay falla, no bloqueamos la generación
+  }
+}
+
+// Nano Banana Pro = modelo de imágenes de Google (mejor texto/fidelidad).
+const MODELO = "gemini-3-pro-image";
 // Director creativo: interpreta la nota del operador antes de generar.
 const MODELO_DIRECTOR = "claude-sonnet-4-6";
 const CARPETA = "american-outlet/estudio-ia";
@@ -19,21 +42,19 @@ function fail(error: string): { ok: false; error: string } {
   return { ok: false, error };
 }
 
-const SISTEMA_DIRECTOR = `Sos el director creativo de American Outlet, el outlet de Costa Rica. El operador te manda info de un producto: una nota informal en español de Costa Rica y, a veces, datos estructurados (precio anterior, precio actual y/o % de descuento). Vos la convertís en una dirección de arte precisa para un modelo de imagen.
+const SISTEMA_DIRECTOR = `Sos el director creativo de American Outlet, el outlet liquidador de Costa Rica (marcas de USA a precio de outlet). El operador te manda info de un producto: una nota informal en español de Costa Rica y, a veces, datos de precio (anterior, actual y/o % de descuento). Vos la convertís en la dirección de arte de un PÓSTER 1:1 sobre FONDO BLANCO con la línea gráfica de la marca.
 
-El modelo ya tiene un SELLO DE MARCA que NO debés repetir: foto high-key luminosa, formato 9:16, producto real como héroe, paleta neutra con acentos azul marino y rojo, y el precio/descuento en tipografía 3D. Vos aportás SOLO lo específico de ESTE producto: la escena, el detalle del producto y el texto promocional.
+El modelo ya tiene fijo el SELLO DE MARCA (fondo blanco, 1:1, producto real high-key como héroe, titular Poppins bold navy, eyebrow con guion rojo, CTA en pill rojo, footer de ubicación/WhatsApp; el logo se compone aparte). Vos aportás SOLO lo específico de ESTE producto.
 
-Tu trabajo, con la herramienta dirigir_imagen:
-1. escena (en inglés): la ESCENA NO es fija. Describí el entorno y los elementos de contexto que dejan claro QUÉ es el producto y PARA QUÉ se usa, según el producto real. Ej: patines → "roller skates gliding on a smooth indoor floor with subtle motion streaks"; licuadora → "blender on a bright kitchen counter with fresh fruit around it"; tenis → "sneakers on an athletic track surface". Solo si el producto NO tiene un uso claro o es un surtido genérico podés usar el motivo outlet: producto saliendo de una caja de AMERICAN OUTLET sobre pallet. NUNCA fuerces siempre la misma escena.
-2. direccion_arte (en inglés): describí el producto concreto y cómo destacarlo (qué es, materiales/color reales, qué énfasis visual). Corto y concreto. NO inventes características que no estén en la info.
-3. textos (lista, en español): el texto EXACTO a renderizar en la imagen. Reglas:
-   - Si vienen datos de precio/descuento, o la nota menciona "oferta", "hoy", "nuevo", "liquidación", "última unidad" o cualquier gancho de venta → SÍ generá texto, corto y vendedor.
-   - Usá los datos estructurados si vienen: % de descuento → "15% OFF"; precio actual → "AHORA ₡124.990"; si además hay precio anterior, poné ambos: "ANTES ₡149.990" y "AHORA ₡124.990". Respetá tildes y el símbolo ₡.
-   - Convertí lo informal en copy de marca: directo y seco. Máximo 2–3 líneas cortas. Sin frases largas.
-   - Si NO hay ningún gancho promocional ni datos de precio, devolvé lista vacía (sin texto).
-4. estilo_texto (en inglés): cómo colocar el badge de precio/descuento en tipografía 3D de marca (navy/red, con profundidad), sin tapar el producto.
+Con la herramienta dirigir_imagen devolvé:
+1. escena (inglés): entorno/contexto que deja claro QUÉ es el producto y PARA QUÉ se usa, adaptado al producto real (NO siempre el mismo), sobre fondo blanco/claro. Ej: licuadora → "blender on a bright white kitchen counter with fresh fruit"; tenis → "sneakers on a light studio surface".
+2. direccion_arte (inglés): el producto concreto + énfasis visual. Corto. NO inventes características que no estén en la info.
+3. titular (español): un titular corto y potente para el póster, en MAYÚSCULAS, voz de liquidador (directo, seco). Ej: "SOMOS LIQUIDADORES", "MARCAS DE USA, PRECIO DE OUTLET", "LO ÚLTIMO DE LA CARGA". Máx ~4 palabras.
+4. cta (español): un call to action corto para el botón rojo. Ej: "Vení a verlo esta semana.", "Consultá por WhatsApp.".
+5. textos (lista, español): SOLO el precio/descuento EXACTO a renderizar, si vienen datos o gancho de venta. % → "15% OFF"; actual → "AHORA ₡124.990"; con anterior, ambos: "ANTES ₡149.990" y "AHORA ₡124.990". Respetá ₡ y tildes. Si no hay precio, lista vacía.
+6. estilo_texto (inglés): cómo colocar el badge de precio (navy/red), sin tapar el producto.
 
-Voz de marca: español de Costa Rica, directa, seca, el inventario es el protagonista.`;
+Voz de marca: español de Costa Rica, voseo, directa y seca. Producto y marca al frente; el precio cierra.`;
 
 const HERRAMIENTA_DIRECTOR = {
   name: "dirigir_imagen",
@@ -51,6 +72,15 @@ const HERRAMIENTA_DIRECTOR = {
         type: "string",
         description: "Inglés. Producto concreto + énfasis visual para esta toma.",
       },
+      titular: {
+        type: "string",
+        description:
+          "Español. Titular corto en MAYÚSCULAS para el póster (voz de liquidador, máx ~4 palabras).",
+      },
+      cta: {
+        type: "string",
+        description: "Español. Call to action corto para el botón rojo.",
+      },
       textos: {
         type: "array",
         items: { type: "string" },
@@ -62,7 +92,7 @@ const HERRAMIENTA_DIRECTOR = {
         description: "Inglés. Colocación y estilo del badge de precio en 3D de marca.",
       },
     },
-    required: ["escena", "direccion_arte", "textos"],
+    required: ["escena", "direccion_arte", "titular", "cta", "textos"],
     additionalProperties: false,
   },
 };
@@ -70,6 +100,8 @@ const HERRAMIENTA_DIRECTOR = {
 type DireccionArte = {
   escena?: string;
   direccionArte: string;
+  titular?: string;
+  cta?: string;
   textos: string[];
   estiloTexto?: string;
 };
@@ -135,12 +167,16 @@ async function dirigirConIA(d: DatosProducto): Promise<DireccionArte> {
     const raw = bloque.input as {
       escena?: string;
       direccion_arte?: string;
+      titular?: string;
+      cta?: string;
       textos?: string[];
       estilo_texto?: string;
     };
     return {
       escena: raw.escena?.trim() || undefined,
       direccionArte: raw.direccion_arte?.trim() || d.info,
+      titular: raw.titular?.trim() || undefined,
+      cta: raw.cta?.trim() || undefined,
       textos: Array.isArray(raw.textos)
         ? raw.textos.filter((t) => typeof t === "string")
         : fallback.textos,
@@ -172,8 +208,8 @@ export async function generarImagen(input: {
 }): Promise<ActionResult<ResultadoGeneracion>> {
   try {
     await requireSesion();
-    if (!process.env.GOOGLE_API_KEY) {
-      return fail("Falta GOOGLE_API_KEY en el servidor. Agregala a .env.local.");
+    if (!process.env.GEMINI_API_KEY) {
+      return fail("Falta GEMINI_API_KEY en el servidor. Agregala a .env.local.");
     }
     if (!input.imagenBase64) return fail("Subí una foto de referencia primero.");
     if (!MIME_ENTRADA_OK.has(input.mimeType)) {
@@ -189,7 +225,7 @@ export async function generarImagen(input: {
     });
 
     // Paso 2: Nano Banana renderiza con el estilo fijo + lo interpretado.
-    const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const resp = await ai.models.generateContent({
       model: MODELO,
       contents: [
@@ -219,11 +255,12 @@ export async function generarImagen(input: {
       );
     }
 
-    const mime = imagen.inlineData.mimeType || "image/png";
+    // Overlay del logo oficial (pixel-perfect) arriba-izquierda.
+    const conLogo = await componerLogo(Buffer.from(imagen.inlineData.data, "base64"));
     return {
       ok: true,
       data: {
-        dataUri: `data:${mime};base64,${imagen.inlineData.data}`,
+        dataUri: `data:image/png;base64,${conLogo.toString("base64")}`,
         textos: direccion.textos,
       },
     };
