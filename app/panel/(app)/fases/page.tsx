@@ -3,6 +3,8 @@ import {
   getMesActivo,
   getFasesDeMes,
   getDiasDeMes,
+  getTiendaActual,
+  getTiendas,
   type Fase,
 } from "@/lib/panel/datos";
 import { tipoPiezaMeta, ordenTipos, type TipoPieza } from "@/lib/panel/piezas";
@@ -11,7 +13,15 @@ import { Icon } from "@/components/ui/Icon";
 export const metadata: Metadata = { title: "Fases" };
 
 export default async function FasesPage() {
-  const mes = await getMesActivo();
+  // Las fases son del calendario de la tienda del usuario (admin → Ciudad Quesada).
+  const tiendaActual = await getTiendaActual();
+  let tiendaId = tiendaActual?.tiendaId ?? null;
+  if (!tiendaId) {
+    const tiendas = await getTiendas();
+    tiendaId =
+      tiendas.find((t) => t.slug === "ciudad-quesada")?.id ?? tiendas[0]?.id ?? null;
+  }
+  const mes = tiendaId ? await getMesActivo(tiendaId) : null;
   if (!mes) {
     return (
       <div className="card-3d p-8 text-center">

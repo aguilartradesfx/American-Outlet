@@ -25,6 +25,8 @@ const PUBLICAR = process.argv.includes("--publicar");
 const DRY = process.argv.includes("--dry");
 const ANIO = 2026;
 const MES = 7;
+// Este calendario es el de Ciudad Quesada (los meses ahora se scopean por tienda).
+const TIENDA_CQ = "cf350688-7f21-411b-8b30-acdad2c023ac";
 
 const md = readFileSync("calendario-american-outlet-julio.md", "utf8");
 
@@ -261,12 +263,13 @@ let { data: mes } = await db
   .select("id, estado")
   .eq("anio", ANIO)
   .eq("mes", MES)
+  .eq("tienda_id", TIENDA_CQ)
   .maybeSingle();
 
 if (!mes) {
   const { data, error } = await db
     .from("meses")
-    .insert({ anio: ANIO, mes: MES, titulo: MES_META.titulo, estado: "borrador" })
+    .insert({ anio: ANIO, mes: MES, titulo: MES_META.titulo, estado: "borrador", tienda_id: TIENDA_CQ })
     .select("id, estado")
     .single();
   if (error) {

@@ -35,9 +35,9 @@ export function PanelNav({
   const esTiendaOperativa =
     rol === "tienda" && !!tiendaSlug && tiendaSlug !== "ciudad-quesada";
 
-  const calendarioItem = esTiendaOperativa
-    ? { href: "/panel/calendario-operativo", label: "Calendario", icon: "calendar" }
-    : { href: "/panel/calendario", label: "Calendario", icon: "calendar" };
+  // Un solo calendario para todas las tiendas. Admin/superadmin cambian de tienda
+  // con el selector dentro de la página.
+  const calendarioItem = { href: "/panel/calendario", label: "Calendario", icon: "calendar" };
 
   const entregasItem =
     rol === "superadmin"
@@ -53,9 +53,6 @@ export function PanelNav({
       : [{ href: "/panel/fases", label: "Fases", icon: "chart" }]),
     ...restoBase,
     ...(entregasItem ? [entregasItem] : []),
-    ...(rol === "superadmin"
-      ? [{ href: "/panel/calendario-operativo", label: "Calendarios tienda", icon: "store" }]
-      : []),
     ...superadminItems.filter((i) => i.roles.includes(rol)),
     ...adminItems.filter((i) => i.roles.includes(rol)),
   ];

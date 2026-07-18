@@ -133,6 +133,7 @@ export type Database = {
           regla_oro_contexto: string | null
           regla_oro_frase: string | null
           slug: string | null
+          tienda_id: string
           titulo: string
           voz: string | null
         }
@@ -150,6 +151,7 @@ export type Database = {
           regla_oro_contexto?: string | null
           regla_oro_frase?: string | null
           slug?: string | null
+          tienda_id: string
           titulo: string
           voz?: string | null
         }
@@ -167,6 +169,7 @@ export type Database = {
           regla_oro_contexto?: string | null
           regla_oro_frase?: string | null
           slug?: string | null
+          tienda_id?: string
           titulo?: string
           voz?: string | null
         }

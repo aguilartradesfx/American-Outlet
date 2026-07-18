@@ -30,11 +30,12 @@ export type DiaConPiezas = Dia & { fase: Fase | null; piezas: Pieza[] };
  * más reciente. Para el superadmin, RLS también deja ver borradores, pero el
  * default sigue priorizando publicados para no aterrizar en un borrador.
  */
-export async function getMesActivo(): Promise<Mes | null> {
+export async function getMesActivo(tiendaId: string): Promise<Mes | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("meses")
     .select("*")
+    .eq("tienda_id", tiendaId)
     .order("anio", { ascending: false })
     .order("mes", { ascending: false });
 
@@ -43,22 +44,25 @@ export async function getMesActivo(): Promise<Mes | null> {
   return publicados[0] ?? data[0];
 }
 
-export async function getMesPorSlug(slug: string): Promise<Mes | null> {
+export async function getMesPorSlug(
+  slug: string,
+  tiendaId?: string,
+): Promise<Mes | null> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("meses")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  return data;
+  let q = supabase.from("meses").select("*").eq("slug", slug);
+  if (tiendaId) q = q.eq("tienda_id", tiendaId);
+  // El slug ya no es único global (una tienda por (tienda_id, slug)); tomamos el
+  // primero por si el llamador no acota por tienda.
+  const { data } = await q.limit(1);
+  return data?.[0] ?? null;
 }
 
-/** Todos los meses visibles para el usuario (RLS filtra por rol). */
-export async function getMeses(): Promise<Mes[]> {
+/** Meses visibles (RLS filtra por rol). Opcionalmente acotados a una tienda. */
+export async function getMeses(tiendaId?: string): Promise<Mes[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("meses")
-    .select("*")
+  let q = supabase.from("meses").select("*");
+  if (tiendaId) q = q.eq("tienda_id", tiendaId);
+  const { data } = await q
     .order("anio", { ascending: false })
     .order("mes", { ascending: false });
   return data ?? [];

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getUsuarioYRol } from "@/lib/auth/guards";
-import { getMeses, getFasesDeMes, type Fase } from "@/lib/panel/datos";
+import { getMeses, getFasesDeMes, getTiendas, type Fase } from "@/lib/panel/datos";
 import { PlanificacionClient } from "./PlanificacionClient";
 
 export const metadata: Metadata = { title: "Planificación" };
@@ -10,7 +10,10 @@ export default async function PlanificacionPage() {
   const { rol } = await getUsuarioYRol();
   if (rol !== "superadmin") redirect("/panel/calendario");
 
-  const meses = await getMeses();
+  // Por ahora la planificación gestiona el calendario de Ciudad Quesada.
+  const tiendas = await getTiendas();
+  const cqId = tiendas.find((t) => t.slug === "ciudad-quesada")?.id;
+  const meses = await getMeses(cqId);
   const fasesPorMes: Record<string, Fase[]> = {};
   await Promise.all(
     meses.map(async (m) => {

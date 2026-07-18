@@ -57,39 +57,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Aislamiento de calendarios por tienda: el calendario de fases/descuentos
-  // (/panel/calendario y /panel/fases) es el de Ciudad Quesada. Un usuario de
-  // tienda que NO es Ciudad Quesada (Fortuna/Florencia) no puede verlo — se le
-  // manda a su calendario operativo. Admin/superadmin pasan sin restricción.
-  // Nota: "/panel/calendario-operativo" no matchea estos patrones (lleva guion,
-  // no slash), así que no se redirige a sí mismo.
-  if (user && esPanel) {
-    const esCalendarioCQ =
-      pathname === "/panel/calendario" ||
-      pathname.startsWith("/panel/calendario/");
-    const esFases =
-      pathname === "/panel/fases" || pathname.startsWith("/panel/fases/");
-
-    if (esCalendarioCQ || esFases) {
-      const { data: perfil } = await supabase
-        .from("perfiles")
-        .select("rol, tiendas(slug)")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const rol = (perfil?.rol as string | undefined) ?? "tienda";
-      const slug =
-        (perfil as { tiendas?: { slug: string } | null } | null)?.tiendas
-          ?.slug ?? null;
-
-      if (rol === "tienda" && slug !== "ciudad-quesada") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/panel/calendario-operativo";
-        url.search = "";
-        return NextResponse.redirect(url);
-      }
-    }
-  }
+  // El calendario está unificado: cada usuario ve /panel/calendario con el
+  // calendario de su propia tienda (admin/superadmin cambian con el selector).
+  // Ya no hay redirect a un calendario operativo separado.
 
   return supabaseResponse;
 }

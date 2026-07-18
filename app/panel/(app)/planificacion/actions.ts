@@ -71,6 +71,8 @@ export async function crearMes(input: {
         titulo: input.titulo.trim(),
         bajada: input.bajada?.trim() || null,
         estado: "borrador",
+        // Los meses se scopean por tienda; planificación gestiona Ciudad Quesada.
+        tienda_id: "cf350688-7f21-411b-8b30-acdad2c023ac",
       })
       .select("id")
       .single();
