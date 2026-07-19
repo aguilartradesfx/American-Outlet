@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/ui/Icon";
 import {
   generarImagen,
@@ -11,6 +11,16 @@ import { optimizarImagen } from "./optimizar-imagen";
 
 const inputCls =
   "w-full rounded-xl border border-[var(--color-borde)] bg-white/70 px-3 py-2 text-sm text-[var(--color-tinta)] outline-none transition focus:border-[var(--color-azul)] focus:bg-white";
+
+// Mensajes que rotan durante la generación (sin revelar el motor).
+const MENSAJES_CARGA = [
+  "Analizando el producto…",
+  "Imaginando la escena…",
+  "Componiendo con el sello de marca…",
+  "Ajustando luz y color…",
+  "Puliendo los detalles…",
+  "Casi listo…",
+];
 
 type Foto = { dataUri: string; base64: string; mime: string; nombre: string };
 
@@ -31,6 +41,21 @@ export function EstudioClient() {
   const [guardada, setGuardada] = useState<ResultadoGuardado | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [optimizando, setOptimizando] = useState(false);
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  // Rota los mensajes de carga mientras se genera.
+  const cargando = pending && !generada;
+  useEffect(() => {
+    if (!cargando) {
+      setMsgIdx(0);
+      return;
+    }
+    const id = setInterval(
+      () => setMsgIdx((i) => (i + 1) % MENSAJES_CARGA.length),
+      1800,
+    );
+    return () => clearInterval(id);
+  }, [cargando]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
@@ -120,9 +145,9 @@ export function EstudioClient() {
           Estudio IA · Imágenes
         </h1>
         <p className="mt-1 text-sm text-[var(--color-tinta-tenue)]">
-          Subí una foto de producto y generá una imagen con el sello de American Outlet:
-          estilo high-key editorial, productos saliendo de la caja, formato 9:16. El estilo
-          es fijo; vos solo cambiás la info.
+          Subí una foto de producto y generá una pieza con el sello de American Outlet:
+          póster 1:1 sobre fondo blanco, con el logo oficial y la línea gráfica de la marca.
+          El estilo es fijo; vos solo cambiás la info.
         </p>
       </header>
 
@@ -263,7 +288,7 @@ export function EstudioClient() {
               className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-azul-900)] px-5 py-2.5 text-sm font-medium text-white transition hover:-translate-y-0.5 disabled:opacity-60"
             >
               <Icon name="sparkle" className="h-4 w-4" />
-              {pending && !generada ? "Generando…" : "Generar imagen"}
+              {cargando ? "Creando…" : "Generar imagen"}
             </button>
             {(foto || generada) && (
               <button
@@ -291,10 +316,31 @@ export function EstudioClient() {
           </div>
 
           {!generada && (
-            <div className="flex aspect-[9/16] max-h-[28rem] w-full items-center justify-center rounded-2xl border border-[var(--color-borde)] bg-white/40">
-              <p className="px-6 text-center text-sm text-[var(--color-tinta-tenue)]">
-                {pending ? "Generando con Nano Banana…" : "Acá aparece la imagen generada."}
-              </p>
+            <div className="flex aspect-square max-h-[28rem] w-full flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--color-borde)] bg-white/40">
+              {cargando ? (
+                <>
+                  <span className="relative flex h-14 w-14 items-center justify-center">
+                    <span className="absolute inset-0 animate-spin rounded-full border-2 border-[var(--color-azul)]/20 border-t-[var(--color-azul)]" />
+                    <Icon name="sparkle" className="h-6 w-6 animate-pulse text-[var(--color-azul)]" />
+                  </span>
+                  <p className="text-sm font-medium text-[var(--color-tinta-suave)]">
+                    {MENSAJES_CARGA[msgIdx]}
+                  </p>
+                  <span className="flex gap-1" aria-hidden="true">
+                    {[0, 160, 320].map((d) => (
+                      <span
+                        key={d}
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--color-azul)]"
+                        style={{ animationDelay: `${d}ms` }}
+                      />
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <p className="px-6 text-center text-sm text-[var(--color-tinta-tenue)]">
+                  Acá aparece la imagen generada.
+                </p>
+              )}
             </div>
           )}
 
