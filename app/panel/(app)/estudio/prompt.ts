@@ -1,11 +1,11 @@
 /**
  * Prompt maestro del Estudio IA de imágenes.
  *
- * Reproduce la LÍNEA GRÁFICA de American Outlet (carpeta Referencias): póster
- * sobre FONDO BLANCO con zonas verticales fijas — arriba logo+titular (zona
- * limpia, sin producto), en medio el producto real como héroe (en tarjeta o
- * escena), CTA en pill rojo y footer de ubicación/WhatsApp. El logo oficial se
- * compone aparte por código en la esquina superior izquierda; por eso se le
+ * Reproduce la LÍNEA GRÁFICA de American Outlet (carpeta Referencias) pero con
+ * composición CREATIVA/variada por producto — no una plantilla fija. Mantiene la
+ * paleta (navy/rojo/blanco), los badges de precio en 3D con degradados, el CTA en
+ * pill rojo y el producto real como héroe. El logo oficial se compone aparte por
+ * código en la esquina superior izquierda; por eso se reserva ese rincón y se le
  * PROHÍBE al modelo dibujar cualquier logo.
  *
  * En inglés a propósito: los modelos siguen mejor las direcciones en inglés.
@@ -19,32 +19,29 @@ const FORMATO_DESC: Record<Formato, string> = {
   "9:16": "9:16 full vertical story",
 };
 
-const ESTILO_MAESTRO = `You are the in-house creative engine for AMERICAN OUTLET — the premium liquidation outlet of Costa Rica (brands from the USA at outlet prices). Produce ONE finished marketing POSTER that follows this EXACT brand template and LAYOUT every time. Recreate the product(s) from the attached reference photo faithfully.
+const ESTILO_MAESTRO = `You are the in-house creative engine for AMERICAN OUTLET — the premium liquidation outlet of Costa Rica (brands from the USA at outlet prices). Create ONE polished, eye-catching marketing poster for the product in the attached photo.
 
-BACKGROUND: clean WHITE / whisper-light neutral, bright, airy, high-key. NEVER cream, beige or dark.
+BE CREATIVE WITH THE COMPOSITION — the layout must feel fresh and specific to THIS product, NOT a fixed template. Vary product placement, angle, scale and where the text blocks sit so posters never look identical. Surprise me while staying on-brand.
 
-VERTICAL LAYOUT (top → bottom) — respect these zones like a professional flyer:
-1. TOP BAND (upper ~30%), on plain white, with NO product in it:
-   - Leave the very TOP-LEFT CORNER empty — the official logo is composited there separately. Do NOT draw any logo, wordmark or bag.
-   - Small uppercase letter-spaced grey label in the top-right (e.g. "TODAS LAS SUCURSALES").
-   - EYEBROW: a short RED (#df0e0b) horizontal dash + a small uppercase letter-spaced NAVY label.
-   - HEADLINE: huge heavy UPPERCASE geometric sans-serif (Poppins-style ExtraBold/Black), NAVY #101d27, 1–3 lines, tight leading.
-   - Optional single grey subhead line.
-2. PRODUCT ZONE (middle ~50%): the REAL product as the hero — large, razor-sharp, catalog quality — either inside a soft ROUNDED-CORNER photo card or as a clean lifestyle scene on light surfaces. The product lives HERE, never up in the top band.
-3. CTA: a rounded RED (#df0e0b) pill button with white bold text, in the lower third.
-4. FOOTER (bottom): a thin hairline divider, then small grey cues — a location pin with "Tu sucursal más cercana" and a WhatsApp glyph with "CONSULTÁ POR WhatsApp".
+ALWAYS keep the AMERICAN OUTLET BRAND SYSTEM:
+- BACKGROUND: bright, mostly WHITE / very light neutral, high-key and airy. No dark or cream backgrounds.
+- PALETTE: strictly NAVY (#101d27 / #004a70) + RED (#df0e0b) accents on white. Nothing off-palette.
+- TYPOGRAPHY: bold UPPERCASE Poppins-style headline in NAVY; a short RED dash "eyebrow" label; clean modern sans-serif.
+- 3D / DEPTH: render PRICE/DISCOUNT as bold CHUNKY 3D extruded typography or a floating tag/sticker with real depth, a crisp highlight and subtle gradients, in navy/red — high impact, premium. Use tasteful gradients and soft realistic shadows so elements feel three-dimensional (like premium outlet flyers).
+- CTA: a rounded RED pill button with white bold text.
+- FOOTER cue when it fits: tiny grey location + WhatsApp hints at the very bottom.
+- PRODUCT: recreate the REAL product from the photo faithfully (shape, materials, parts, colors). It is the hero — large, razor-sharp, catalog quality.
 
-PRODUCT FIDELITY: recreate the exact product from the reference photo — same shape, proportions, materials, real labels/logos on the product and real colors. Do NOT alter its identity; it must read as the SAME product.
+NO LOGO + RESERVED CORNER (this is CRITICAL, follow exactly):
+- Do NOT draw any American Outlet logo, wordmark, or shopping-bag/star icon anywhere.
+- Keep the TOP-LEFT CORNER completely EMPTY: a clean blank rectangle of about the top-left 32% of the width × 17% of the height must contain NOTHING — no headline, no letters, no product, no graphic, just clean white space. The real logo is composited into that empty corner afterwards.
+- Therefore place the HEADLINE clearly BELOW that reserved corner, or centered, or to the right — never let any text or product enter that top-left rectangle.
 
-NO LOGO — CRITICAL: do NOT draw, letter, illustrate or hint any logo, the words "American Outlet", or any shopping-bag/star icon ANYWHERE. The real logo is added afterwards in the empty top-left corner.
-
-TEXT RULES: render provided text EXACTLY (same words, accents and ₡). Do not invent extra copy, do not misspell, no placeholder text. If a block is not provided, omit that element.
-
-Accents: only NAVY and RED on white. Mood: premium yet accessible, bright, clean — a real outlet poster.`;
+TEXT: render the provided HEADLINE, CTA and PRICE EXACTLY as given (same words, accents, ₡). Do not invent extra copy, do not misspell, no placeholder text. If a block is not provided, omit that element.`;
 
 /**
- * Construye el prompt final: estilo + layout fijos de marca + el formato, la
- * escena, el titular, el CTA y los textos exactos que produce el director.
+ * Construye el prompt final: estilo + reglas de marca + el formato, la escena, el
+ * titular, el CTA y los textos exactos que produce el director.
  */
 export function construirPrompt(input: {
   formato: Formato;
@@ -57,13 +54,13 @@ export function construirPrompt(input: {
 }): string {
   const escena = input.escena?.trim();
   const bloqueEscena = escena
-    ? `SCENE FOR THIS PRODUCT (build the product zone around this so it's obvious what the product is and how it's used):
+    ? `SCENE FOR THIS PRODUCT (build the environment around this so it's obvious what the product is and how it's used):
 ${escena}`
     : `SCENE FOR THIS PRODUCT: a clean, bright hero shot of the product on a white editorial high-key setting that fits what it is.`;
 
   const titular = input.titular?.trim();
   const bloqueTitular = titular
-    ? `HEADLINE TEXT (render verbatim, uppercase, Poppins-style bold navy, in the top band): "${titular}"`
+    ? `HEADLINE TEXT (render verbatim, uppercase, Poppins-style bold navy, NOT in the reserved top-left corner): "${titular}"`
     : `HEADLINE TEXT: none. Do not invent a headline.`;
 
   const cta = input.cta?.trim();
@@ -76,12 +73,12 @@ ${escena}`
     textos.length > 0
       ? `PRICE/DISCOUNT TEXT (render verbatim, do not translate or alter):
 ${textos.map((t) => `  • "${t}"`).join("\n")}
-PRICE PLACEMENT & STYLE: ${input.estiloTexto?.trim() || "Bold navy/red price badge with depth, near the product without covering it."}`
+PRICE PLACEMENT & STYLE: ${input.estiloTexto?.trim() || "Bold 3D extruded navy/red price badge with depth, highlight and subtle gradient, near the product without covering it."}`
       : `PRICE/DISCOUNT TEXT: none. Do not add any price badge.`;
 
   return `${ESTILO_MAESTRO}
 
-OUTPUT FORMAT: ${FORMATO_DESC[input.formato]} — compose the layout for this exact shape, edge to edge.
+OUTPUT FORMAT: ${FORMATO_DESC[input.formato]} — compose for this exact shape, edge to edge.
 
 ${bloqueEscena}
 
