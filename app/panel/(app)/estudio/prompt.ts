@@ -18,12 +18,16 @@ CANVAS & BACKGROUND:
 - Clean WHITE background (pure #ffffff / whisper-light neutral). Bright, airy, high-key. NEVER cream, never beige, never dark.
 - Square 1:1, edge to edge, generous negative space.
 
+NO LOGO — CRITICAL:
+- Do NOT draw, letter, illustrate or hint any logo, brand wordmark, the words "American Outlet", or any shopping-bag / star icon ANYWHERE in the image. The real official logo is composited separately afterwards.
+- Leave the TOP-LEFT corner clean and empty (reserved for that logo). Do not place the headline in that exact corner.
+
 THE PRODUCT IS THE HERO:
 - Recreate the REAL product faithfully from the reference photo: same shape, proportions, materials, real brand logos/labels/text and real colors. Do NOT invent, restyle or alter the product identity. It must read as the SAME product, just placed in the scene.
 - Product large, razor-sharp, catalog-quality, soft realistic shadow on a light surface. Build the scene around what the product IS and how it's used (see SCENE block).
 
 BRAND CHROME (designed-poster layout, like a professional flyer):
-- HEADLINE: heavy bold UPPERCASE geometric sans-serif (Poppins-style, ExtraBold/Black), color NAVY #101d27, tight leading, top-left area (leave the very top-left corner clear for the logo).
+- HEADLINE: heavy bold UPPERCASE geometric sans-serif (Poppins-style, ExtraBold/Black), color NAVY #101d27, tight leading, in the upper area but NOT in the very top-left corner (that corner stays empty for the logo).
 - EYEBROW: a short RED (#df0e0b) horizontal dash followed by a small uppercase letter-spaced navy label, just above the headline.
 - SUBHEAD (optional): one short line, medium weight, muted grey.
 - CTA: a rounded RED (#df0e0b) pill button with white bold text near the lower area.

@@ -3,6 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { GoogleGenAI } from "@google/genai";
+import OpenAI, { toFile } from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import sharp from "sharp";
 import { requireSesion } from "@/lib/auth/guards";
@@ -31,8 +32,11 @@ async function componerLogo(base: Buffer): Promise<Buffer> {
   }
 }
 
-// Nano Banana Pro = modelo de imágenes de Google (mejor texto/fidelidad).
-const MODELO = "gemini-3-pro-image";
+// Proveedor de imágenes: "openai" = GPT Image 2 · "gemini" = Nano Banana Pro.
+// Cambiá esta constante para alternar y comparar resultados.
+const PROVEEDOR: "openai" | "gemini" = "openai";
+const MODELO_GEMINI = "gemini-3-pro-image";
+const MODELO_OPENAI = "gpt-image-2";
 // Director creativo: interpreta la nota del operador antes de generar.
 const MODELO_DIRECTOR = "claude-sonnet-4-6";
 const CARPETA = "american-outlet/estudio-ia";
@@ -194,9 +198,62 @@ export type ResultadoGeneracion = {
   textos: string[];
 };
 
+/** Genera la imagen base (sin logo) con GPT Image 2 (image-to-image). */
+async function generarConOpenAI(
+  prompt: string,
+  base64: string,
+  mime: string,
+): Promise<Buffer> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+  const file = await toFile(Buffer.from(base64, "base64"), `producto.${ext}`, {
+    type: mime,
+  });
+  const resp = await openai.images.edit({
+    model: MODELO_OPENAI,
+    image: file,
+    prompt,
+    size: "1024x1024",
+    quality: "high",
+  });
+  const b64 = resp.data?.[0]?.b64_json;
+  if (!b64) throw new Error("El modelo no devolvió una imagen.");
+  return Buffer.from(b64, "base64");
+}
+
+/** Genera la imagen base (sin logo) con Nano Banana Pro (Gemini). */
+async function generarConGemini(
+  prompt: string,
+  base64: string,
+  mime: string,
+): Promise<Buffer> {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const resp = await ai.models.generateContent({
+    model: MODELO_GEMINI,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt }, { inlineData: { mimeType: mime, data: base64 } }],
+      },
+    ],
+    config: { imageConfig: { aspectRatio: ASPECT_RATIO } },
+  });
+  const partes = resp.candidates?.[0]?.content?.parts ?? [];
+  const img = partes.find((p) => p.inlineData?.data);
+  if (!img?.inlineData?.data) {
+    const texto = partes.find((p) => p.text)?.text;
+    throw new Error(
+      texto
+        ? `El modelo no devolvió imagen: ${texto.slice(0, 200)}`
+        : "El modelo no devolvió una imagen. Probá de nuevo o ajustá la info.",
+    );
+  }
+  return Buffer.from(img.inlineData.data, "base64");
+}
+
 /**
- * Genera una imagen cinemática con el estilo maestro fijo a partir de una foto
- * de referencia + la info variable del usuario. NO la guarda todavía.
+ * Genera una imagen con el estilo maestro fijo a partir de una foto de
+ * referencia + la info variable del usuario. NO la guarda todavía.
  */
 export async function generarImagen(input: {
   imagenBase64: string; // base64 puro (sin el prefijo data:)
@@ -208,55 +265,40 @@ export async function generarImagen(input: {
 }): Promise<ActionResult<ResultadoGeneracion>> {
   try {
     await requireSesion();
-    if (!process.env.GEMINI_API_KEY) {
-      return fail("Falta GEMINI_API_KEY en el servidor. Agregala a .env.local.");
+    const faltaKey =
+      PROVEEDOR === "openai"
+        ? !process.env.OPENAI_API_KEY
+        : !process.env.GEMINI_API_KEY;
+    if (faltaKey) {
+      return fail(`Falta la API key de imágenes (${PROVEEDOR}) en el servidor.`);
     }
     if (!input.imagenBase64) return fail("Subí una foto de referencia primero.");
     if (!MIME_ENTRADA_OK.has(input.mimeType)) {
       return fail("Formato no soportado. Usá JPG, PNG o WEBP.");
     }
 
-    // Paso 1: Claude interpreta la info, decide la escena, la dirección de arte y los textos.
+    // Paso 1: Claude interpreta la info → escena, dirección de arte, titular, CTA, textos.
     const direccion = await dirigirConIA({
       info: input.info,
       precioAnterior: input.precioAnterior,
       precioActual: input.precioActual,
       descuento: input.descuento,
     });
+    const prompt = construirPrompt(direccion);
 
-    // Paso 2: Nano Banana renderiza con el estilo fijo + lo interpretado.
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const resp = await ai.models.generateContent({
-      model: MODELO,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: construirPrompt(direccion) },
-            { inlineData: { mimeType: input.mimeType, data: input.imagenBase64 } },
-          ],
-        },
-      ],
-      // Estilo y formato fijos: 9:16 vertical full.
-      config: {
-        imageConfig: { aspectRatio: ASPECT_RATIO },
-      },
-    });
-
-    const partes = resp.candidates?.[0]?.content?.parts ?? [];
-    const imagen = partes.find((p) => p.inlineData?.data);
-    if (!imagen?.inlineData?.data) {
-      // A veces el modelo responde solo texto (p. ej. rechazo o aclaración).
-      const texto = partes.find((p) => p.text)?.text;
-      return fail(
-        texto
-          ? `El modelo no devolvió imagen: ${texto.slice(0, 200)}`
-          : "El modelo no devolvió una imagen. Probá de nuevo o ajustá la info.",
-      );
+    // Paso 2: el proveedor elegido genera la imagen (image-to-image, sin logo).
+    let base: Buffer;
+    try {
+      base =
+        PROVEEDOR === "openai"
+          ? await generarConOpenAI(prompt, input.imagenBase64, input.mimeType)
+          : await generarConGemini(prompt, input.imagenBase64, input.mimeType);
+    } catch (e) {
+      return fail(e instanceof Error ? e.message : "No se pudo generar la imagen.");
     }
 
-    // Overlay del logo oficial (pixel-perfect) arriba-izquierda.
-    const conLogo = await componerLogo(Buffer.from(imagen.inlineData.data, "base64"));
+    // Paso 3: overlay del logo oficial (pixel-perfect) arriba-izquierda.
+    const conLogo = await componerLogo(base);
     return {
       ok: true,
       data: {
