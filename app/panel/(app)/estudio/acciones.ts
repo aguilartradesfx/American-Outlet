@@ -214,7 +214,7 @@ async function generarConOpenAI(
     image: file,
     prompt,
     size: "1024x1024",
-    quality: "high",
+    quality: "medium",
   });
   const b64 = resp.data?.[0]?.b64_json;
   if (!b64) throw new Error("El modelo no devolvió una imagen.");
