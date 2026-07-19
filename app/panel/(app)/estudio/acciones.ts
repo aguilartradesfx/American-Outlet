@@ -16,8 +16,8 @@ async function componerLogo(base: Buffer): Promise<Buffer> {
   try {
     const meta = await sharp(base).metadata();
     const W = meta.width ?? 1024;
-    const margen = Math.round(W * 0.05);
-    const logoW = Math.round(W * 0.26);
+    const margen = Math.round(W * 0.045);
+    const logoW = Math.round(W * 0.2);
     const svg = await readFile(join(process.cwd(), "public/brand/logo-poster.svg"));
     const logoPng = await sharp(svg, { density: 400 })
       .resize({ width: logoW })

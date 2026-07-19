@@ -35,23 +35,20 @@ const DIRECCION = {
 };
 
 // ---- PROMPT MAESTRO (editá esto para iterar) -------------------------------
-const ESTILO_MAESTRO = `You are the in-house creative engine for AMERICAN OUTLET — the premium liquidation outlet of Costa Rica (brands from the USA at outlet prices). Create ONE polished, eye-catching marketing poster for the product in the attached photo.
+const ESTILO_MAESTRO = `Create a marketing FLYER for AMERICAN OUTLET (the premium liquidation outlet of Costa Rica — brands from the USA at outlet prices). Follow this EXACT layout SKELETON every time — this is the brand's graphic line. Keep the STRUCTURE identical; only the product scene, the copy and the badge style may vary between posters.
 
-BE CREATIVE WITH THE COMPOSITION — the layout must feel fresh and specific to THIS product, NOT a fixed template. Vary product placement, angle, scale and where the text blocks sit so posters never look identical. Surprise me while staying on-brand.
+CANVAS: bright WHITE / very-light neutral background with generous clean margins. Palette STRICTLY NAVY (#101d27 / #004a70) + RED (#df0e0b) on white. Bold Poppins-style typography.
 
-ALWAYS keep the AMERICAN OUTLET BRAND SYSTEM:
-- BACKGROUND: bright, mostly WHITE / very light neutral, high-key and airy. No dark or cream backgrounds.
-- PALETTE: strictly NAVY (#101d27 / #004a70) + RED (#df0e0b) accents on white. Nothing off-palette.
-- TYPOGRAPHY: bold UPPERCASE Poppins-style headline in NAVY; a short RED dash "eyebrow" label; clean modern sans-serif.
-- 3D / DEPTH: render PRICE/DISCOUNT as bold CHUNKY 3D extruded typography or a floating tag/sticker with real depth, a crisp highlight and subtle gradients, in navy/red — high impact, premium. Use tasteful gradients and soft realistic shadows so elements feel three-dimensional (like premium outlet flyers).
-- CTA: a rounded RED pill button with white bold text.
-- FOOTER cue when it fits: tiny grey location + WhatsApp hints at the very bottom.
-- PRODUCT: recreate the REAL product from the photo faithfully (shape, materials, parts, colors). It is the hero — large, razor-sharp, catalog quality.
+LAYOUT ZONES (top → bottom), like a clean professional flyer — respect them:
+1. HEADER STRIP (the top ~14% of the image height) — reserved for branding ONLY: keep the TOP-LEFT corner completely EMPTY (the logo is composited there later — absolutely nothing in it, no text, no dash, no graphic). Put ONLY a small uppercase letter-spaced grey label in the TOP-RIGHT (e.g. "TODAS LAS SUCURSALES"). No eyebrow, headline, product or badge in this strip.
+2. HEADLINE BLOCK — must START BELOW that top header strip (below ~15% from the top), left-aligned on plain white: a short RED horizontal dash + a small uppercase NAVY eyebrow label; then a BIG bold UPPERCASE NAVY headline (1–2 lines, tight leading); then a short 1–2 line grey subhead. Nothing from this block may enter the top-left logo corner.
+3. PRODUCT CARD (middle-lower): a LARGE ROUNDED-CORNER photo card/panel (soft rounded rectangle) filling most of the width, containing the REAL product from the reference photo as the hero inside a tasteful styled scene. The product stays INSIDE this card — it must not bleed into the headline area or the footer.
+4. OVERLAY CALLOUTS on the product card's lower-left: an optional small white rounded info card OR a bold 3D navy/red price badge (extruded, with real depth, highlight and a subtle gradient), plus a rounded RED PILL CTA button with white bold text and a small circular icon.
+5. FOOTER (bottom, on white): a thin full-width hairline divider, then a structured row of small grey cues — a location pin with branch/hours text on the LEFT, and a WhatsApp glyph with "CONSULTÁ POR WhatsApp" on the RIGHT.
 
-NO LOGO + RESERVED CORNER (this is CRITICAL, follow exactly):
-- Do NOT draw any American Outlet logo, wordmark, or shopping-bag/star icon anywhere.
-- Keep the TOP-LEFT CORNER completely EMPTY: a clean blank rectangle of about the top-left 32% of the width × 17% of the height must contain NOTHING — no headline, no letters, no product, no graphic, just clean white space. The real logo is composited into that empty corner afterwards.
-- Therefore place the HEADLINE clearly BELOW that reserved corner, or centered, or to the right — never let any text or product enter that top-left rectangle.
+VARIATION: keep this exact skeleton EVERY time; only vary the product-card scene/angle, the copy and the badge so posters share the brand line without being identical.
+
+NO LOGO: do NOT draw any American Outlet logo, wordmark, shopping-bag or star icon anywhere — keep the top-left corner clean for the composited logo.
 
 TEXT: render the provided HEADLINE, CTA and PRICE EXACTLY as given (same words, accents, ₡). Do not invent extra copy, do not misspell.`;
 
@@ -74,8 +71,8 @@ PRICE STYLE: ${DIRECCION.estiloTexto}`;
 async function componerLogo(base) {
   const meta = await sharp(base).metadata();
   const W = meta.width ?? 2048;
-  const margen = Math.round(W * 0.05);
-  const logoW = Math.round(W * 0.24);
+  const margen = Math.round(W * 0.045);
+  const logoW = Math.round(W * 0.2);
   const svg = await readFile("public/brand/logo-poster.svg");
   const logo = await sharp(svg, { density: 500 }).resize({ width: logoW }).png().toBuffer();
   return sharp(base).composite([{ input: logo, top: margen, left: margen }]).png().toBuffer();
