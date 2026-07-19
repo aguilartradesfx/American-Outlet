@@ -42,6 +42,7 @@ export function EstudioClient() {
   const [copiado, setCopiado] = useState(false);
   const [optimizando, setOptimizando] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
+  const [aspecto, setAspecto] = useState<"1:1" | "3:4" | "9:16">("1:1");
 
   // Rota los mensajes de carga mientras se genera.
   const cargando = pending && !generada;
@@ -56,6 +57,13 @@ export function EstudioClient() {
     );
     return () => clearInterval(id);
   }, [cargando]);
+
+  const aspectClass =
+    aspecto === "9:16"
+      ? "aspect-[9/16]"
+      : aspecto === "3:4"
+        ? "aspect-[3/4]"
+        : "aspect-square";
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
@@ -87,6 +95,7 @@ export function EstudioClient() {
         const r = await generarImagen({
           imagenBase64: foto.base64,
           mimeType: foto.mime,
+          aspecto,
           info,
           precioAnterior,
           precioActual,
@@ -270,6 +279,38 @@ export function EstudioClient() {
             </span>
           </fieldset>
 
+          <fieldset>
+            <legend className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-tinta-tenue)]">
+              Formato
+            </legend>
+            <div className="mt-1 grid grid-cols-3 gap-2">
+              {(
+                [
+                  { v: "1:1", label: "Cuadrado", sub: "1:1" },
+                  { v: "3:4", label: "Vertical", sub: "3:4" },
+                  { v: "9:16", label: "Historia", sub: "9:16" },
+                ] as const
+              ).map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setAspecto(o.v)}
+                  aria-pressed={aspecto === o.v}
+                  className={`rounded-xl border px-2 py-2 text-center transition ${
+                    aspecto === o.v
+                      ? "border-[var(--color-azul)] bg-[var(--color-azul)]/8 text-[var(--color-azul)]"
+                      : "border-[var(--color-borde)] bg-white/60 text-[var(--color-tinta-suave)] hover:bg-white"
+                  }`}
+                >
+                  <span className="block text-xs font-semibold">{o.label}</span>
+                  <span className="block text-[10px] text-[var(--color-tinta-tenue)]">
+                    {o.sub}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
           <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-tinta-tenue)]">
             Nombre del archivo (opcional)
             <input
@@ -316,7 +357,7 @@ export function EstudioClient() {
           </div>
 
           {!generada && (
-            <div className="flex aspect-square max-h-[28rem] w-full flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--color-borde)] bg-white/40">
+            <div className={`flex ${aspectClass} max-h-[28rem] w-full flex-col items-center justify-center gap-4 rounded-2xl border border-[var(--color-borde)] bg-white/40`}>
               {cargando ? (
                 <>
                   <span className="relative flex h-14 w-14 items-center justify-center">

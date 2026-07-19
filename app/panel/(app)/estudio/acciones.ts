@@ -9,7 +9,7 @@ import sharp from "sharp";
 import { requireSesion } from "@/lib/auth/guards";
 import { cloudinary } from "@/lib/cloudinary";
 import type { ActionResult } from "@/lib/panel/resultado";
-import { construirPrompt, ASPECT_RATIO } from "./prompt";
+import { construirPrompt, type Formato } from "./prompt";
 
 /** Compone el logo oficial (SVG) arriba-izquierda de la imagen generada. */
 async function componerLogo(base: Buffer): Promise<Buffer> {
@@ -37,6 +37,12 @@ async function componerLogo(base: Buffer): Promise<Buffer> {
 const PROVEEDOR: "openai" | "gemini" = "openai";
 const MODELO_GEMINI = "gemini-3-pro-image";
 const MODELO_OPENAI = "gpt-image-2";
+// Tamaños por formato: 2K, divisibles por 16, borde ≤ 3840 (límites de gpt-image-2).
+const TAMANO_OPENAI: Record<Formato, string> = {
+  "1:1": "2048x2048",
+  "3:4": "1536x2048",
+  "9:16": "1152x2048",
+};
 // Director creativo: interpreta la nota del operador antes de generar.
 const MODELO_DIRECTOR = "claude-sonnet-4-6";
 const CARPETA = "american-outlet/estudio-ia";
@@ -203,6 +209,7 @@ async function generarConOpenAI(
   prompt: string,
   base64: string,
   mime: string,
+  size: string,
 ): Promise<Buffer> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
@@ -213,7 +220,8 @@ async function generarConOpenAI(
     model: MODELO_OPENAI,
     image: file,
     prompt,
-    size: "1024x1024",
+    // Tamaños custom (2K) que gpt-image-2 acepta; el SDK aún tipa los antiguos.
+    size: size as "1024x1024",
     quality: "medium",
   });
   const b64 = resp.data?.[0]?.b64_json;
@@ -226,6 +234,7 @@ async function generarConGemini(
   prompt: string,
   base64: string,
   mime: string,
+  aspecto: Formato,
 ): Promise<Buffer> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const resp = await ai.models.generateContent({
@@ -236,7 +245,7 @@ async function generarConGemini(
         parts: [{ text: prompt }, { inlineData: { mimeType: mime, data: base64 } }],
       },
     ],
-    config: { imageConfig: { aspectRatio: ASPECT_RATIO } },
+    config: { imageConfig: { aspectRatio: aspecto } },
   });
   const partes = resp.candidates?.[0]?.content?.parts ?? [];
   const img = partes.find((p) => p.inlineData?.data);
@@ -258,6 +267,7 @@ async function generarConGemini(
 export async function generarImagen(input: {
   imagenBase64: string; // base64 puro (sin el prefijo data:)
   mimeType: string;
+  aspecto: Formato;
   info: string;
   precioAnterior?: string;
   precioActual?: string;
@@ -284,15 +294,25 @@ export async function generarImagen(input: {
       precioActual: input.precioActual,
       descuento: input.descuento,
     });
-    const prompt = construirPrompt(direccion);
+    const prompt = construirPrompt({ ...direccion, formato: input.aspecto });
 
     // Paso 2: el proveedor elegido genera la imagen (image-to-image, sin logo).
     let base: Buffer;
     try {
       base =
         PROVEEDOR === "openai"
-          ? await generarConOpenAI(prompt, input.imagenBase64, input.mimeType)
-          : await generarConGemini(prompt, input.imagenBase64, input.mimeType);
+          ? await generarConOpenAI(
+              prompt,
+              input.imagenBase64,
+              input.mimeType,
+              TAMANO_OPENAI[input.aspecto],
+            )
+          : await generarConGemini(
+              prompt,
+              input.imagenBase64,
+              input.mimeType,
+              input.aspecto,
+            );
     } catch (e) {
       return fail(e instanceof Error ? e.message : "No se pudo generar la imagen.");
     }
@@ -336,8 +356,8 @@ export async function guardarEnCloudinary(input: {
 
     const entrada = Buffer.from(base64, "base64");
     const jpg = await sharp(entrada)
-      .resize({ width: 1280, withoutEnlargement: true }) // 9:16 → 1280×2276 aprox.
-      .jpeg({ quality: 88, mozjpeg: true })
+      .resize({ width: 2048, withoutEnlargement: true }) // conserva el 2K generado
+      .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
 
     const slug =
