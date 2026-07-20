@@ -7,6 +7,7 @@ import OpenAI, { toFile } from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import sharp from "sharp";
 import { requireSesion } from "@/lib/auth/guards";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { cloudinary } from "@/lib/cloudinary";
 import type { ActionResult } from "@/lib/panel/resultado";
 import { construirPrompt, type Formato } from "./prompt";
@@ -42,6 +43,20 @@ const TAMANO_OPENAI: Record<Formato, string> = {
   "1:1": "2048x2048",
   "3:4": "1536x2048",
   "9:16": "1152x2048",
+};
+const CALIDAD = "medium" as const;
+// Tarifas gpt-image (USD por token): salida $40/1M, imagen-entrada $10/1M, texto-entrada $5/1M.
+const USD_OUT = 40e-6;
+const USD_IMG_IN = 10e-6;
+const USD_TXT_IN = 5e-6;
+// Costo estimado del director (Claude) por generación.
+const COSTO_DIRECTOR = 0.008;
+
+type GenResult = {
+  buffer: Buffer;
+  tokensIn: number;
+  tokensOut: number;
+  costoUsd: number;
 };
 // Director creativo: interpreta la nota del operador antes de generar.
 const MODELO_DIRECTOR = "claude-sonnet-4-6";
@@ -198,8 +213,11 @@ async function dirigirConIA(d: DatosProducto): Promise<DireccionArte> {
 }
 
 export type ResultadoGeneracion = {
-  /** Data URI listo para previsualizar en un <img> (PNG sin comprimir del modelo). */
-  dataUri: string;
+  /** URL en Cloudinary de la imagen generada (ya queda guardada). */
+  url: string;
+  publicId: string;
+  /** Costo estimado en USD de esta generación (imagen + director). */
+  costoUsd: number;
   /** Texto promocional que el director decidió poner en la imagen (para mostrar en UI). */
   textos: string[];
 };
@@ -210,7 +228,7 @@ async function generarConOpenAI(
   base64: string,
   mime: string,
   size: string,
-): Promise<Buffer> {
+): Promise<GenResult> {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
   const file = await toFile(Buffer.from(base64, "base64"), `producto.${ext}`, {
@@ -222,11 +240,20 @@ async function generarConOpenAI(
     prompt,
     // Tamaños custom (2K) que gpt-image-2 acepta; el SDK aún tipa los antiguos.
     size: size as "1024x1024",
-    quality: "medium",
+    quality: CALIDAD,
   });
   const b64 = resp.data?.[0]?.b64_json;
   if (!b64) throw new Error("El modelo no devolvió una imagen.");
-  return Buffer.from(b64, "base64");
+  const u = resp.usage;
+  const tokensOut = u?.output_tokens ?? 0;
+  const imgIn = u?.input_tokens_details?.image_tokens ?? 0;
+  const txtIn = u?.input_tokens_details?.text_tokens ?? 0;
+  return {
+    buffer: Buffer.from(b64, "base64"),
+    tokensIn: u?.input_tokens ?? 0,
+    tokensOut,
+    costoUsd: tokensOut * USD_OUT + imgIn * USD_IMG_IN + txtIn * USD_TXT_IN,
+  };
 }
 
 /** Genera la imagen base (sin logo) con Nano Banana Pro (Gemini). */
@@ -235,7 +262,7 @@ async function generarConGemini(
   base64: string,
   mime: string,
   aspecto: Formato,
-): Promise<Buffer> {
+): Promise<GenResult> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const resp = await ai.models.generateContent({
     model: MODELO_GEMINI,
@@ -257,7 +284,13 @@ async function generarConGemini(
         : "El modelo no devolvió una imagen. Probá de nuevo o ajustá la info.",
     );
   }
-  return Buffer.from(img.inlineData.data, "base64");
+  const um = resp.usageMetadata;
+  return {
+    buffer: Buffer.from(img.inlineData.data, "base64"),
+    tokensIn: um?.promptTokenCount ?? 0,
+    tokensOut: um?.candidatesTokenCount ?? 0,
+    costoUsd: 0.1, // estimación (Gemini no es el proveedor por defecto)
+  };
 }
 
 /**
@@ -274,13 +307,16 @@ export async function generarImagen(input: {
   descuento?: string;
 }): Promise<ActionResult<ResultadoGeneracion>> {
   try {
-    await requireSesion();
+    const { userId } = await requireSesion();
     const faltaKey =
       PROVEEDOR === "openai"
         ? !process.env.OPENAI_API_KEY
         : !process.env.GEMINI_API_KEY;
     if (faltaKey) {
       return fail(`Falta la API key de imágenes (${PROVEEDOR}) en el servidor.`);
+    }
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      return fail("Faltan credenciales de Cloudinary en el servidor.");
     }
     if (!input.imagenBase64) return fail("Subí una foto de referencia primero.");
     if (!MIME_ENTRADA_OK.has(input.mimeType)) {
@@ -297,9 +333,9 @@ export async function generarImagen(input: {
     const prompt = construirPrompt({ ...direccion, formato: input.aspecto });
 
     // Paso 2: el proveedor elegido genera la imagen (image-to-image, sin logo).
-    let base: Buffer;
+    let gen: GenResult;
     try {
-      base =
+      gen =
         PROVEEDOR === "openai"
           ? await generarConOpenAI(
               prompt,
@@ -317,12 +353,51 @@ export async function generarImagen(input: {
       return fail(e instanceof Error ? e.message : "No se pudo generar la imagen.");
     }
 
-    // Paso 3: overlay del logo oficial (pixel-perfect) arriba-izquierda.
-    const conLogo = await componerLogo(base);
+    // Paso 3: overlay del logo + comprimir + subir a Cloudinary (queda guardada).
+    const conLogo = await componerLogo(gen.buffer);
+    const jpg = await sharp(conLogo)
+      .resize({ width: 2048, withoutEnlargement: true })
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toBuffer();
+    const subida = await cloudinary.uploader.upload(
+      `data:image/jpeg;base64,${jpg.toString("base64")}`,
+      {
+        folder: CARPETA,
+        public_id: `estudio-${Date.now()}`,
+        overwrite: false,
+        resource_type: "image",
+      },
+    );
+
+    // Paso 4: registrar la generación (historial + costo) — service-role.
+    const costoTotal = gen.costoUsd + COSTO_DIRECTOR;
+    const admin = createServiceRoleClient();
+    const { data: perfil } = await admin
+      .from("perfiles")
+      .select("nombre")
+      .eq("id", userId)
+      .maybeSingle();
+    await admin.from("estudio_generaciones").insert({
+      creado_por_id: userId,
+      creado_por_nombre: perfil?.nombre ?? null,
+      proveedor: PROVEEDOR,
+      modelo: PROVEEDOR === "openai" ? MODELO_OPENAI : MODELO_GEMINI,
+      calidad: CALIDAD,
+      formato: input.aspecto,
+      tokens_in: gen.tokensIn,
+      tokens_out: gen.tokensOut,
+      costo_usd: costoTotal,
+      cloudinary_url: subida.secure_url,
+      cloudinary_public_id: subida.public_id,
+      titular: direccion.titular ?? null,
+    });
+
     return {
       ok: true,
       data: {
-        dataUri: `data:image/png;base64,${conLogo.toString("base64")}`,
+        url: subida.secure_url,
+        publicId: subida.public_id,
+        costoUsd: costoTotal,
         textos: direccion.textos,
       },
     };

@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/ui/Icon";
-import {
-  generarImagen,
-  guardarEnCloudinary,
-  type ResultadoGuardado,
-} from "./acciones";
+import { generarImagen } from "./acciones";
 import { optimizarImagen } from "./optimizar-imagen";
 
 const inputCls =
@@ -36,9 +32,9 @@ export function EstudioClient() {
   const [descuento, setDescuento] = useState("");
   const [nombre, setNombre] = useState("");
 
-  const [generada, setGenerada] = useState<string | null>(null); // data URI
+  const [generada, setGenerada] = useState<string | null>(null); // URL de Cloudinary
   const [textos, setTextos] = useState<string[]>([]);
-  const [guardada, setGuardada] = useState<ResultadoGuardado | null>(null);
+  const [costo, setCosto] = useState<number | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [optimizando, setOptimizando] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
@@ -77,7 +73,7 @@ export function EstudioClient() {
       const foto = await optimizarImagen(file);
       setFoto(foto);
       setGenerada(null);
-      setGuardada(null);
+      setCosto(null);
     } catch {
       setError("No se pudo procesar la imagen. Probá con otra foto.");
     } finally {
@@ -89,7 +85,7 @@ export function EstudioClient() {
     if (!foto) return;
     setError(null);
     setGenerada(null);
-    setGuardada(null);
+    setCosto(null);
     startTransition(async () => {
       try {
         const r = await generarImagen({
@@ -102,8 +98,9 @@ export function EstudioClient() {
           descuento,
         });
         if (!r.ok) return setError(r.error);
-        setGenerada(r.data.dataUri);
+        setGenerada(r.data.url);
         setTextos(r.data.textos);
+        setCosto(r.data.costoUsd);
       } catch {
         setError(
           "No se pudo generar la imagen. Probá de nuevo en un momento.",
@@ -112,23 +109,9 @@ export function EstudioClient() {
     });
   }
 
-  function guardar() {
-    if (!generada) return;
-    setError(null);
-    startTransition(async () => {
-      try {
-        const r = await guardarEnCloudinary({ dataUri: generada, nombre: nombre || info });
-        if (!r.ok) return setError(r.error);
-        setGuardada(r.data);
-      } catch {
-        setError("No se pudo guardar la imagen. Probá de nuevo en un momento.");
-      }
-    });
-  }
-
   async function copiar() {
-    if (!guardada) return;
-    await navigator.clipboard.writeText(guardada.url);
+    if (!generada) return;
+    await navigator.clipboard.writeText(generada);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 1500);
   }
@@ -142,10 +125,14 @@ export function EstudioClient() {
     setNombre("");
     setGenerada(null);
     setTextos([]);
-    setGuardada(null);
+    setCosto(null);
     setError(null);
     if (fileRef.current) fileRef.current.value = "";
   }
+
+  const descargaUrl = generada
+    ? generada.replace("/upload/", "/upload/fl_attachment/")
+    : "";
 
   return (
     <div className="space-y-5">
@@ -154,9 +141,9 @@ export function EstudioClient() {
           Estudio IA · Imágenes
         </h1>
         <p className="mt-1 text-sm text-[var(--color-tinta-tenue)]">
-          Subí una foto de producto y generá una pieza con el sello de American Outlet:
-          póster 1:1 sobre fondo blanco, con el logo oficial y la línea gráfica de la marca.
-          El estilo es fijo; vos solo cambiás la info.
+          Subí una foto de producto y generá una pieza con el sello de American Outlet
+          (fondo blanco, logo oficial y la línea gráfica de la marca). Elegís el formato;
+          el estilo es fijo. Cada imagen queda guardada en el historial.
         </p>
       </header>
 
@@ -311,16 +298,6 @@ export function EstudioClient() {
             </div>
           </fieldset>
 
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-tinta-tenue)]">
-            Nombre del archivo (opcional)
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="zapatillas-deportivas"
-              className={`${inputCls} mt-1`}
-            />
-          </label>
-
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -347,13 +324,20 @@ export function EstudioClient() {
 
         {/* Columna derecha: resultado */}
         <div className="card-3d space-y-4 p-6">
-          <div className="flex items-center gap-2">
-            <span className="surface flex h-9 w-9 items-center justify-center text-[var(--color-tinta-suave)]">
-              <Icon name="film" className="h-5 w-5" />
-            </span>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-tinta)]">
-              Resultado
-            </h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="surface flex h-9 w-9 items-center justify-center text-[var(--color-tinta-suave)]">
+                <Icon name="film" className="h-5 w-5" />
+              </span>
+              <h2 className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-tinta)]">
+                Resultado
+              </h2>
+            </div>
+            {costo !== null && (
+              <span className="rounded-full border border-[var(--color-borde)] bg-white/60 px-3 py-1 text-xs font-medium text-[var(--color-tinta-suave)]">
+                Costo: <span className="font-semibold text-[var(--color-tinta)]">${costo.toFixed(3)}</span>
+              </span>
+            )}
           </div>
 
           {!generada && (
@@ -413,23 +397,21 @@ export function EstudioClient() {
               )}
 
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={guardar}
-                  disabled={pending || !!guardada}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 disabled:opacity-60"
-                >
-                  <Icon name="check" className="h-4 w-4" />
-                  {guardada ? "Guardada" : pending ? "Guardando…" : "Guardar en Cloudinary"}
-                </button>
                 <a
-                  href={generada}
-                  download={`${(nombre || "american-outlet").replace(/[^a-z0-9-]/gi, "-")}.png`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-borde)] px-5 py-2 text-sm font-medium text-[var(--color-tinta-suave)] transition hover:bg-white"
+                  href={descargaUrl}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-azul-900)] px-5 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5"
                 >
                   <Icon name="image" className="h-4 w-4" />
                   Descargar
                 </a>
+                <button
+                  type="button"
+                  onClick={copiar}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-borde)] px-5 py-2 text-sm font-medium text-[var(--color-tinta-suave)] transition hover:bg-white"
+                >
+                  <Icon name="chat" className="h-4 w-4" />
+                  {copiado ? "¡Copiado!" : "Copiar URL"}
+                </button>
                 <button
                   type="button"
                   onClick={generar}
@@ -441,28 +423,9 @@ export function EstudioClient() {
                 </button>
               </div>
 
-              {guardada && (
-                <div className="surface space-y-2 p-3">
-                  <p className="text-xs font-semibold text-[var(--color-tinta)]">
-                    Subida a Cloudinary · {guardada.width}×{guardada.height}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      readOnly
-                      value={guardada.url}
-                      className={`${inputCls} font-mono text-xs`}
-                      onFocus={(e) => e.currentTarget.select()}
-                    />
-                    <button
-                      type="button"
-                      onClick={copiar}
-                      className="shrink-0 rounded-full bg-[var(--color-azul-900)] px-4 py-2 text-xs font-medium text-white transition hover:-translate-y-0.5"
-                    >
-                      {copiado ? "¡Copiado!" : "Copiar URL"}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <p className="text-[11px] text-[var(--color-tinta-tenue)]">
+                Ya quedó guardada en el historial · {aspecto} · 2K
+              </p>
             </>
           )}
         </div>

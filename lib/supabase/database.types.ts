@@ -572,6 +572,57 @@ export type Database = {
         }
         Relationships: []
       }
+      estudio_generaciones: {
+        Row: {
+          calidad: string | null
+          cloudinary_public_id: string | null
+          cloudinary_url: string | null
+          costo_usd: number
+          creado_en: string
+          creado_por_id: string | null
+          creado_por_nombre: string | null
+          formato: string | null
+          id: string
+          modelo: string | null
+          proveedor: string | null
+          titular: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          calidad?: string | null
+          cloudinary_public_id?: string | null
+          cloudinary_url?: string | null
+          costo_usd?: number
+          creado_en?: string
+          creado_por_id?: string | null
+          creado_por_nombre?: string | null
+          formato?: string | null
+          id?: string
+          modelo?: string | null
+          proveedor?: string | null
+          titular?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          calidad?: string | null
+          cloudinary_public_id?: string | null
+          cloudinary_url?: string | null
+          costo_usd?: number
+          creado_en?: string
+          creado_por_id?: string | null
+          creado_por_nombre?: string | null
+          formato?: string | null
+          id?: string
+          modelo?: string | null
+          proveedor?: string | null
+          titular?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
